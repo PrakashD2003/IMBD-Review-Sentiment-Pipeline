@@ -1,1 +1,12 @@
 cookiecutter
+dagshub 
+mlflow
+scikit-learn
+pandas
+numpy
+matplotlib
+seaborn
+jupyter
+nltk
+xgboost
+-e .
