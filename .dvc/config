@@ -1,0 +1,6 @@
+[core]
+    remote = my_local_repo
+['remote "mylocal"']
+    url = ../s3_local
+['remote "my_local_repo"']
+    url = ../s3_local

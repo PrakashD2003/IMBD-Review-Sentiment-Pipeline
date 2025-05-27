@@ -9,4 +9,6 @@ seaborn
 jupyter
 nltk
 xgboost
+dvc
+colorlog
 -e .
