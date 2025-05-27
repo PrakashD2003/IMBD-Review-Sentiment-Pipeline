@@ -1,3 +1,20 @@
+# DVC cache: content‐addressable storage of your data
+.dvc/cache/
+
+# DVC temp files (locks & intermediate experiment workspaces)
+.dvc/tmp/
+.dvc/tmp/rwlock
+.dvc/tmp/exps/
+
+# (If you use DVC experiments) experiment cache
+.dvc/experiments/
+
+# (Optional) plot caches
+.dvc/plots/cache/
+
+# (Optional) checkpoint metadata
+.dvc/checkpoints/
+
 s3_local
 cred.txt
 projectflow.txt
