@@ -15,6 +15,7 @@
 # (Optional) checkpoint metadata
 .dvc/checkpoints/
 
+data
 s3_local
 cred.txt
 projectflow.txt
