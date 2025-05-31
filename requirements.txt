@@ -11,4 +11,5 @@ nltk
 xgboost
 dvc
 colorlog
+mypy_boto3_s3
 -e .
