@@ -24,7 +24,7 @@ class DataIngestion:
         :raises DetailedException: If loading the PARAM_FILE_PATH fails.
         """
         try:
-            logger.debug("Configuring DataIngestion class of data_ingestion module through constructer...")
+            logger.debug("Configuring DataIngestion class of data module through constructer...")
             self.data_ingestion_config = data_ingestion_config
             self.params = load_params(params_path=PARAM_FILE_PATH,logger=logger)
             self.s3 = S3Connection(logger=logger)
