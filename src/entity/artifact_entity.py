@@ -10,3 +10,9 @@ class DataIngestionArtifact:
 class DataPreprocessingArtifact:
     preprocessed_training_data_file_path:str
     preprocessed_test_data_file_path:str
+
+@dataclass
+class FeatureEngineeringArtifact:
+    feature_engineered_training_data_file_path:str 
+    feature_engineered_test_data_file_path:str
+    vectorizer_obj_file_path:str 

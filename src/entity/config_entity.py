@@ -17,3 +17,11 @@ class DataPreprocessingConfig:
     preprocessed_data_dir:str = os.path.join(DATA_DIR_NAME, DATA_PREPROCESSING_DIR)
     preprocessed_trained_data_file_path:str = os.path.join(preprocessed_data_dir, PREPROCESSED_TRAINED_DATA_FILE_NAME)
     preprocessed_test_data_file_path:str = os.path.join(preprocessed_data_dir, PREPROCESSED_TEST_DATA_FILE_NAME)
+
+@dataclass
+class FeatureEngineeringConfig:
+    feature_engineered_data_dir:str = os.path.join(DATA_DIR_NAME, FEATURE_ENGINEERING_DATA_DIR)
+    vectorizer_obj_dir:str = os.path.join(MODEL_OBJ_DIR, VECTORIZER_OBJ_DIR)
+    feature_engineered_training_data_file_path:str = os.path.join(feature_engineered_data_dir, FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME)
+    feature_engineered_test_data_file_path:str = os.path.join(feature_engineered_data_dir, FEATURE_ENGINEERED_TEST_DATA_FILE_NAME)
+    vectorizer_obj_file_path:str = os.path.join(vectorizer_obj_dir, VECTORIZER_OBJ_FILE_NAME)

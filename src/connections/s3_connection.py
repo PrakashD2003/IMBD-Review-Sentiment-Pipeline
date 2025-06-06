@@ -1,9 +1,11 @@
 import os
 import boto3
 import logging 
+import dask.dataframe as ddf
 import pandas as pd
 from io import StringIO
-from typing import Optional
+from typing import Optional, Union, Optional
+
 from mypy_boto3_s3 import S3Client
 from logger import configure_logger
 from exception import DetailedException
@@ -58,14 +60,16 @@ class S3Connection:
         except Exception as e:
             raise DetailedException(exc=e, logger=self.logger) from e   
     
-    def load_csv_from_s3(self, bucket_name:str, file_key:str)->pd.DataFrame:
+    def load_csv_from_s3(self, bucket_name:str, file_key:str, as_ddf:bool = True)-> Union[pd.DataFrame, ddf.DataFrame]:
         """
-        Fetch a CSV file from S3 and load it into a pandas DataFrame.
+        Fetches a CSV file from S3 and loads it into either a Dask DataFrame or a pandas DataFrame.
 
         :param bucket_name: Name of the S3 bucket.
-        :param file_key: Key/path of the CSV file in the bucket.
-        :return: pandas.DataFrame with the CSV contents.
-        :raises DetailedException: On any failure fetching or parsing the file.
+        :param file_key: The key (path) to the CSV file within the bucket.
+        :param as_ddf: If True, return a Dask DataFrame; otherwise return a pandas DataFrame.
+                    Defaults to True.
+        :return: A Dask DataFrame (if as_ddf=True) or a pandas DataFrame (if as_ddf=False).
+        :raises DetailedException: On any error during S3 access or CSV parsing.
         """
         try:
             self.logger.info("Entered 'load_csv_from_s3' method of 'S3Connection' class.")
@@ -73,15 +77,25 @@ class S3Connection:
 
             obj = self.s3_client.get_object(Bucket=bucket_name, Key=file_key)
             self.logger.info(f"file object '{file_key}' retrieved successfully from bucket '{bucket_name}'.")
-            self.logger.debug("Converting fetched s3 object into dataframe...")
-            df = pd.read_csv(StringIO(obj['Body'].read().decode('utf-8')))
-            self.logger.info("Successfully concerted s3 object into dataframe.")
+
+            body_bytes = obj["Body"].read()
+            body_str = body_bytes.decode("utf-8")
+            buffer = StringIO(body_str)
+            
+            if as_ddf:
+                self.logger.debug("Converting fetched s3 object into dask dataframe...")
+                df = ddf.read_csv(buffer, assume_missing=True)
+                self.logger.info("Successfully concerted s3 object into dask dataframe.")
+            else:
+                self.logger.debug("Converting fetched s3 object into dataframe...")
+                df = pd.read_csv(buffer)
+                self.logger.info("Successfully concerted s3 object into dataframe.")
             self.logger.debug("Exited 'load_csv_from_s3' method of S3Connection' class.")
             return df
         except Exception as e:
             raise DetailedException(exc=e, logger=self.logger)
-
-
+    
+  
 
 
 

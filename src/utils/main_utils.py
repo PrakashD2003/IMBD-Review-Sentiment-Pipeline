@@ -1,5 +1,7 @@
 import os
+import dask.dataframe as ddf
 import yaml
+import dill
 from logger import configure_logger
 from exception import DetailedException
 from typing import Optional
@@ -101,8 +103,8 @@ def save_dataframe_as_csv(file_save_path: str, dataframe: pd.DataFrame, index: b
     :raises DetailedException: Wraps any unexpected exception that occurs during directory
                                creation or file writing, adding file/line context.
     """
-    logger = logger or DEFAULT_LOGGER
     try:
+        logger = logger or DEFAULT_LOGGER
         logger.debug("Entered save_dataframe_as_csv; target path: %s", file_save_path)
 
         # Ensure parent directory exists
@@ -115,7 +117,110 @@ def save_dataframe_as_csv(file_save_path: str, dataframe: pd.DataFrame, index: b
         logger.debug("Writing DataFrame to CSV at: %s", file_save_path)
         dataframe.to_csv(file_save_path, index=index)
         logger.info("DataFrame successfully saved to CSV: %s", file_save_path)
-
+        logger.debug("Exiting 'save_dataframe_as_csv' function of 'main_utils' module.")
     except Exception as e:
         # Any failure gets wrapped for consistent, detailed logging
         raise DetailedException(exc=e, logger=logger) from e
+
+def save_object(file_path: str, obj: object, logger: Optional[logging.Logger] = None) -> None:
+    """
+    Serializes and saves a Python object (e.g., model, transformer) using `dill`.
+
+    Parameters:
+    -----------
+    file_path : str
+        Path where the object will be saved.
+    obj : object
+        Python object to serialize and save.
+    logger : Optional[Logger], default=None
+        Custom logger instance. If not provided, a base logger will be used.
+
+    Raises:
+    -------
+    MyException
+        If saving the object fails.
+    """
+    try:
+        logger = logger or DEFAULT_LOGGER
+        logger.debug("Entered 'save_object'; target path: %s", file_path)
+
+        parent_dir = os.path.dirname(file_path) or "."
+        logger.debug("Creating parent directory if missing: %s", parent_dir)
+        os.makedirs(parent_dir, exist_ok=True)
+        logger.info("Parent directory ready: %s", parent_dir)
+        with open(file_path, "wb") as file_obj:
+            logger.debug("Saving object at: %s", file_path)
+            dill.dump(obj, file_obj)
+            logger.info(f"Object saved at: {file_path}")
+        logger.debug("Exiting 'save_object' function of 'main_utils' module.")
+
+    except Exception as e:
+        raise DetailedException(exc=e, logger=logger) from e
+    
+def load_dask_dataframe(file_path: str, logger: Optional[logging.Logger] = None)-> ddf.DataFrame:
+    """
+    Load a CSV file from disk into a Dask DataFrame, with logging.
+
+    :param file_path: Path to the CSV file to load.
+    :param logger: Optional Logger instance. If None, uses DEFAULT_LOGGER.
+    :return: A Dask DataFrame representing the contents of the CSV.
+    :raises FileNotFoundError: If the specified file does not exist.
+    :raises pd.errors.ParserError: If Dask (via pandas under the hood) cannot parse the CSV.
+    :raises DetailedException: For any other unexpected errors, wrapped with traceback info.
+    """
+    try:
+        logger = logger or DEFAULT_LOGGER
+
+        logger.debug("Entered 'load_dask_dataframe' function of utils module.")
+        logger.debug("Loading Csv data from: %s", file_path)
+        dataframe  = ddf.read_csv(file_path)
+        logger.info("Data has been successfully loaded from: %s ",file_path)
+        logger.debug("Exiting 'load_dask_dataframe' function and returning 'dask dataframe'.")
+        return dataframe
+    except FileNotFoundError as e:
+        logger.error("File not found: %s", file_path)
+        raise
+    except pd.errors.ParserError as e:
+        logger.error("Failed to parse the csv file: %s", e)
+        raise
+    except Exception as e:
+        raise DetailedException(exc=e, logger=logger) from e
+    
+def save_dask_dataframe_as_csv(file_save_path: str, dataframe: ddf.DataFrame, single_file: bool = False,index: bool = False, logger: Optional[logging.Logger] = None) -> None:
+    """
+    Persist a Dask DataFrame to disk as CSV, optionally combining all partitions into one file.
+
+    By default, Dask writes one CSV per partition under the given path. If `single_file=True`,
+    Dask collects partitions on the client and writes a single CSV. Note that writing a single
+    file requires all data to pass through the driver, so it’s best for moderate-sized datasets.
+
+    :param file_save_path: 
+        Destination path or filename pattern. Examples:
+        - "out/processed-*.csv": writes multiple partition files like processed-0.csv, processed-1.csv, etc.
+        - "out/processed.csv": when single_file=True, creates a single file at that exact path.
+    :param dataframe: The Dask DataFrame to save.
+    :param single_file: If True, combine all partitions into one CSV. .
+                        If False, writes one CSV per partition under a folder. Defaults to False
+    :param index: Whether to include the index in the output CSV(s). Defaults to False.
+    :param logger: Optional Logger instance. If None, uses DEFAULT_LOGGER.
+    :raises DetailedException: If directory creation or the CSV write fails.
+    """
+    try:
+        logger = logger or DEFAULT_LOGGER
+        logger.debug("Entered save_dask_dataframe_as_csv; target path: %s", file_save_path)
+
+        # Ensure parent directory exists
+        parent_dir = os.path.dirname(file_save_path) or "."
+        logger.debug("Creating parent directory if missing: %s", parent_dir)
+        os.makedirs(parent_dir, exist_ok=True)
+        logger.info("Parent directory ready: %s", parent_dir)
+
+        # Write DataFrame to CSV
+        logger.debug("Writing DataFrame to CSV at: %s", file_save_path)
+        dataframe.to_csv(file_save_path, index=index, single_file=single_file)
+        logger.info("DataFrame successfully saved to CSV: %s", file_save_path)
+        logger.debug("Exiting 'save_dask_dataframe_as_csv' function of 'main_utils' module.")
+    except Exception as e:
+        # Any failure gets wrapped for consistent, detailed logging
+        raise DetailedException(exc=e, logger=logger) from e
+
