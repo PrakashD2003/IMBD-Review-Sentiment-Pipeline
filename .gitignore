@@ -1,3 +1,51 @@
+# Local Terraform CLI files
+.terraform/
+.terraform.lock.hcl
+
+# Terraform plan files
+*.tfplan
+*.tfstate
+*.tfstate.*
+
+# Sensitive variable files
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Crash log files
+crash.log
+*.log
+
+# Ignore environment files or local configs
+.env
+.envrc
+
+# Ignore backup files (e.g., in some editors)
+*.bak
+*.swp
+*.tmp
+*~
+
+# VSCode & IDE-specific
+.vscode/
+.idea/
+*.code-workspace
+
+# Python virtualenv if using automation scripts
+.venv/
+__pycache__/
+*.pyc
+
+# MacOS/Linux system files
+.DS_Store
+Thumbs.db
+
+
+
+
 # DVC cache: content‐addressable storage of your data
 .dvc/cache/
 

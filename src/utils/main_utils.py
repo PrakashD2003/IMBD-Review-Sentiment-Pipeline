@@ -122,40 +122,7 @@ def save_dataframe_as_csv(file_save_path: str, dataframe: pd.DataFrame, index: b
         # Any failure gets wrapped for consistent, detailed logging
         raise DetailedException(exc=e, logger=logger) from e
 
-def save_object(file_path: str, obj: object, logger: Optional[logging.Logger] = None) -> None:
-    """
-    Serializes and saves a Python object (e.g., model, transformer) using `dill`.
 
-    Parameters:
-    -----------
-    file_path : str
-        Path where the object will be saved.
-    obj : object
-        Python object to serialize and save.
-    logger : Optional[Logger], default=None
-        Custom logger instance. If not provided, a base logger will be used.
-
-    Raises:
-    -------
-    MyException
-        If saving the object fails.
-    """
-    try:
-        logger = logger or DEFAULT_LOGGER
-        logger.debug("Entered 'save_object'; target path: %s", file_path)
-
-        parent_dir = os.path.dirname(file_path) or "."
-        logger.debug("Creating parent directory if missing: %s", parent_dir)
-        os.makedirs(parent_dir, exist_ok=True)
-        logger.info("Parent directory ready: %s", parent_dir)
-        with open(file_path, "wb") as file_obj:
-            logger.debug("Saving object at: %s", file_path)
-            dill.dump(obj, file_obj)
-            logger.info(f"Object saved at: {file_path}")
-        logger.debug("Exiting 'save_object' function of 'main_utils' module.")
-
-    except Exception as e:
-        raise DetailedException(exc=e, logger=logger) from e
     
 def load_dask_dataframe(file_path: str, logger: Optional[logging.Logger] = None)-> ddf.DataFrame:
     """
@@ -207,7 +174,7 @@ def save_dask_dataframe_as_csv(file_save_path: str, dataframe: ddf.DataFrame, si
     """
     try:
         logger = logger or DEFAULT_LOGGER
-        logger.debug("Entered save_dask_dataframe_as_csv; target path: %s", file_save_path)
+        logger.info("Entered save_dask_dataframe_as_csv; target path: %s", file_save_path)
 
         # Ensure parent directory exists
         parent_dir = os.path.dirname(file_save_path) or "."
@@ -223,4 +190,40 @@ def save_dask_dataframe_as_csv(file_save_path: str, dataframe: ddf.DataFrame, si
     except Exception as e:
         # Any failure gets wrapped for consistent, detailed logging
         raise DetailedException(exc=e, logger=logger) from e
+
+def save_object(
+    file_path: str,
+    obj: object,
+    logger: Optional[logging.Logger] = None
+) -> None:
+    """
+    Persist a Python object to disk using dill serialization.
+
+    :param file_path:  Full path (including filename) where the object will be written.
+    :param obj:        Any picklable Python object to save.
+    :param logger:     Optional Logger; if None, DEFAULT_LOGGER is used.
+    :raises DetailedException: If the directory cannot be created or the dump fails.
+    """
+    try:
+        log = logger or DEFAULT_LOGGER
+        log.info("Entered save_object; target path: %s", file_path)
+
+        # Ensure parent directory exists
+        parent_dir = os.path.dirname(file_path) or "."
+        log.debug("Creating parent directory if missing: %s", parent_dir)
+        os.makedirs(parent_dir, exist_ok=True)
+        log.info("Parent directory ready: %s", parent_dir)
+
+        # Write the object
+        with open(file_path, "wb") as file_obj:
+            dill.dump(obj, file_obj)
+            log.info("Object successfully saved at: %s", file_path)
+
+    except Exception as e:
+        raise DetailedException(exc=e, logger=log) from e
+
+
+
+
+
 

@@ -10,7 +10,7 @@ class DataIngestionConfig:
     training_data_file_path:str = os.path.join(data_ingestion_dir,TRAINING_DATA_FILE_NAME)
     test_data_file_path:str = os.path.join(data_ingestion_dir,TEST_DATA_FILE_NAME)
     s3_bucket:str = os.getenv(S3_DATA_BUCKET_ENV) or S3_DATA_BUCKET
-    s3_data_file_key:str = os.getenv(S3_DATA_BUCKET_ENV) or S3_DATA_FILE_NAME
+    s3_data_file_key:str = os.getenv(S3_DATA_FILE_PREFIX_ENV) or S3_DATA_FILE_PREFIX
 
 @dataclass
 class DataPreprocessingConfig:

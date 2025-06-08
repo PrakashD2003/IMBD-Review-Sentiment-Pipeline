@@ -24,8 +24,8 @@ else:
     TEST_DATA_FILE_NAME:     str = "test-*.csv"
 S3_DATA_BUCKET_ENV:str = "S3_DATA_BUCKET_ENV"
 S3_DATA_BUCKET:str = "imbd-capstone-proj-bucket"
-S3_DATA_FILE_NAME_ENV:str = "S3_DATA_FILE_NAME_ENV"
-S3_DATA_FILE_NAME:str = ""
+S3_DATA_FILE_PREFIX_ENV:str = "S3_DATA_FILE_NAME_ENV"
+S3_DATA_FILE_PREFIX:str = "data/IMDB Dataset.csv"
 
 ### Data Preprocessing Constants ###
 DATA_PREPROCESSING_DIR:str = "processed"

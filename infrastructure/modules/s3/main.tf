@@ -17,16 +17,16 @@ resource "aws_s3_bucket" "this" {
 
 resource "aws_s3_bucket_versioning" "this" {
   count = var.enable_versioning ? 1 : 0
-  bucket = aws_s3_bucket.this
+  bucket = aws_s3_bucket.this.id
 
   versioning_configuration {
-    status = var.enable_versioning ? "Enable" : "Suspended"
+    status = var.enable_versioning ? "Enabled" : "Suspended"
   }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   count = var.enable_sse ? 1 : 0
-  bucket = aws_s3_bucket.this
+  bucket = aws_s3_bucket.this.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -36,7 +36,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 }
 
 resource "aws_s3_bucket_public_access_block" "this" {
-  bucket = aws_s3_bucket.this
+  bucket = aws_s3_bucket.this.id
   
   block_public_acls = true
   block_public_policy = true
