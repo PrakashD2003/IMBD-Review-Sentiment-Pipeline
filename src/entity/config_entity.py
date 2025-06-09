@@ -32,8 +32,19 @@ class ModelTrainerConfig:
 
 @dataclass
 class ModelEvaluationConfig:
-    mlflow_uri:str = MLFLOW_TRACKING_URI
+    
     performance_metrics_file_save_path:str = os.path.join(METRICS_DIR_PATH, PERFORMANCE_METRICS_FILE_NAME)
     experiment_info_file_save_paht:str = os.path.join(METRICS_DIR_PATH, EXPERIMENT_INFO_FILE_NAME)
+    
+
+@dataclass
+class ModelRegistryConfig:
+    mlflow_uri:str = MLFLOW_TRACKING_URI
+    dagshub_repo_name:str = DAGSHUB_REPO_NAME
+    dagshub_repo_owner_name:str = DAGSHUB_REPO_OWNER_NAME
+    experiment_name:str = EXPERIMENT_NAME
     mlflow_model_name:str = MLFLOW_REGISTRY_MODEL_NAME
     mlflow_vectorizer_name:str = MLFLOW_REGISTRY_VECTORIZER_NAME
+    mlflow_model_name:str = MODEL_NAME
+    mlflow_model_stage:str = MODEL_STAGE
+    mlflow_vectorizer_name:str = VECTORIZER_NAME
