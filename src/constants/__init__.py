@@ -71,4 +71,5 @@ AWS_REGION: str = os.getenv("AWS_REGION")
 
 ### Mlflow Variables ###
 MLFLOW_TRACKING_URI:str = os.getenv("MLFLOW_TRACKING_URI")
-
+DAGSHUB_REPO_OWNER_NAME:str = os.getenv("DAGSHUB_REPO_OWNER_NAME")
+DAGSHUB_REPO_NAME:str = os.getenv("DAGSHUB_REPO_NAME")
