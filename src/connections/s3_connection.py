@@ -40,9 +40,9 @@ class S3Connection:
                 self.logger.debug("Getting AWS Credentials from Environment Variable(if present)...")
                 # build kwargs only if creds exist
                 creds = {}
-                aws_access_key_id = os.getenv(AWS_ACCESS_KEY_ID)
-                aws_secret_access_key = os.getenv(AWS_SECRET_ACCESS_KEY)
-                aws_region = os.getenv(AWS_REGION, "ap-south-1" ) 
+                aws_access_key_id = AWS_ACCESS_KEY_ID
+                aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+                aws_region = AWS_REGION or "ap-south-1" 
                 if aws_access_key_id and aws_secret_access_key:
                     self.logger.debug("Found AWS env credentials, using them.")
                     creds["aws_access_key_id"] = aws_access_key_id

@@ -4,10 +4,6 @@ import os
 _sflag = os.getenv("SINGLE_FILE", "").strip().lower()
 SINGLE_FILE: bool = _sflag in ("1", "true", "yes")
 
-### AWS Credentials ###
-AWS_ACCESS_KEY_ID: str = "AWS_ACCESS_KEY_ID"
-AWS_SECRET_ACCESS_KEY: str = "AWS_SECRET_ACCESS_KEY"
-AWS_REGION: str = "AWS_REGION"
 
 ### Params(yaml file) Constants ###
 PARAM_FILE_PATH = ""
@@ -22,9 +18,9 @@ if SINGLE_FILE:
 else:
     TRAINING_DATA_FILE_NAME: str = "train-*.csv"
     TEST_DATA_FILE_NAME:     str = "test-*.csv"
-S3_DATA_BUCKET_ENV:str = "S3_DATA_BUCKET_ENV"
+S3_DATA_BUCKET_ENV:str = os.getenv("S3_DATA_BUCKET_ENV")
 S3_DATA_BUCKET:str = "imbd-capstone-proj-bucket"
-S3_DATA_FILE_PREFIX_ENV:str = "S3_DATA_FILE_NAME_ENV"
+S3_DATA_FILE_PREFIX_ENV:str = os.getenv("S3_DATA_FILE_NAME_ENV")
 S3_DATA_FILE_PREFIX:str = "data/IMDB Dataset.csv"
 
 ### Data Preprocessing Constants ###
@@ -37,16 +33,42 @@ else:
     PREPROCESSED_TEST_DATA_FILE_NAME = "preprocessed_test_data-*.csv"
 
 ### Feature Engineering Constants ###
-MODEL_OBJ_DIR:str = "saved_models"
-FEATURE_ENGINEERING_DATA_DIR:str = "feature_engineered"
+OBJ_SAVE_DIR:str = "saved_models"
 VECTORIZER_OBJ_DIR:str = "vectorizer"
+VECTORIZER_OBJ_FILE_NAME:str = "vectorizer.pkl"
+FEATURE_ENGINEERING_DATA_DIR:str = "feature_engineered"
 if SINGLE_FILE:
     FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME:str = "feature_engineered_training_data.csv"
     FEATURE_ENGINEERED_TEST_DATA_FILE_NAME:str = "feature_engineered_test_data.csv"
 else:
     FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME:str = "feature_engineered_training_data-*.csv"
     FEATURE_ENGINEERED_TEST_DATA_FILE_NAME:str = "feature_engineered_test_data-*.csv"
-VECTORIZER_OBJ_FILE_NAME:str = "vectorizer.pkl"
+
+### Model Training Constants ###
+TRAINED_MODEL_OBJ_DIR:str = "model"
+TRAINED_MODEL_OBJ_NAME:str = "model.pkl"
+
+### Model Evaluation Constants ###
+METRICS_DIR_PATH:str = "reports"
+PERFORMANCE_METRICS_FILE_NAME:str = "performance_metrics.json" 
+EXPERIMENT_INFO_FILE_NAME:str = "experiment_info.json"
+MLFLOW_REGISTRY_MODEL_NAME:str = "model"
+MLFLOW_REGISTRY_VECTORIZER_NAME:str = "vectorizer"
+
+################################################# ENV Variables ####################################################
+# SINGLE_FILE
+
+### Data Ingestion Constants ###
+# S3_DATA_BUCKET_ENV:str = "S3_DATA_BUCKET_ENV"
+# S3_DATA_FILE_PREFIX_ENV:str = "S3_DATA_FILE_NAME_ENV"
 
 
+
+### AWS Credentials ###
+AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION: str = os.getenv("AWS_REGION")
+
+### Mlflow Variables ###
+MLFLOW_TRACKING_URI:str = os.getenv("MLFLOW_TRACKING_URI")
 

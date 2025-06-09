@@ -1,4 +1,5 @@
 import os
+import json
 import dask.dataframe as ddf
 import yaml
 import dill
@@ -36,6 +37,12 @@ def load_params(params_path: str, logger: Optional[logging.Logger] = None) -> di
         logger = logger or DEFAULT_LOGGER
 
         logger.debug("Entered load_params function of utils module.")
+
+        if not os.path.exists(params_path):
+            logger.error("File Not Found : %s", params_path)
+            raise FileNotFoundError(f"{params_path} does not exist.")
+
+        
         logger.debug("Loading parameters from: %s", params_path)
 
         with open(params_path, 'r') as file:
@@ -77,6 +84,11 @@ def load_csv_data(file_path: str, logger: Optional[logging.Logger] = None)->pd.D
         logger = logger or DEFAULT_LOGGER
 
         logger.debug("Entered load_csv_data function of utils module.")
+
+        if not os.path.exists(file_path):
+            logger.error("File Not Found : %s", file_path)
+            raise FileNotFoundError(f"{file_path} does not exist.")
+
         logger.debug("Loading Csv data from: %s", file_path)
         dataframe  = pd.read_csv(file_path)
         logger.info("Data has been successfully loaded from: %s ",file_path)
@@ -139,6 +151,11 @@ def load_dask_dataframe(file_path: str, logger: Optional[logging.Logger] = None)
         logger = logger or DEFAULT_LOGGER
 
         logger.debug("Entered 'load_dask_dataframe' function of utils module.")
+
+        if not os.path.exists(file_path):
+            logger.error("File Not Found : %s", file_path)
+            raise FileNotFoundError(f"{file_path} does not exist.")
+        
         logger.debug("Loading Csv data from: %s", file_path)
         dataframe  = ddf.read_csv(file_path)
         logger.info("Data has been successfully loaded from: %s ",file_path)
@@ -221,6 +238,91 @@ def save_object(
 
     except Exception as e:
         raise DetailedException(exc=e, logger=log) from e
+
+def load_object(file_path: str, logger: Optional[logging.Logger] = None) -> object:
+    """
+    Load a pickled Python object from disk using dill.
+
+    :param file_path: Full path to the serialized object file.
+    :param logger:    Optional logger; falls back to DEFAULT_LOGGER if None.
+    :return:          The deserialized Python object.
+    :raises FileNotFoundError: If the file does not exist.
+    :raises DetailedException: For any other I/O or deserialization errors.
+    """
+    try:
+        log = logger or DEFAULT_LOGGER
+        log.info("Entered load_object; target path: %s", file_path)
+        if not os.path.exists(file_path):
+            logger.error("File Not Found : %s", file_path)
+            raise FileNotFoundError(f"{file_path} does not exist.")
+
+        with open(file_path, "rb") as file_obj:
+            obj = dill.load(file_obj)
+        return obj
+    except Exception as e:
+        raise DetailedException(exc=e, logger=logger) from e
+
+
+def save_json(
+    file_path: str,
+    dict: dict,
+    logger: Optional[logging.Logger] = None
+) -> None:
+    """
+    Save a Python dictionary to a JSON file.
+
+    :param file_path: Full path where the JSON file will be written.
+    :param data:      Dictionary to serialize.
+    :param logger:    Optional logger; falls back to DEFAULT_LOGGER if None.
+    :raises DetailedException: On I/O errors during directory creation or write.
+    """
+    try:
+        log = logger or DEFAULT_LOGGER
+        log.info("Entered save_json; target path: %s", file_path)
+
+        # Ensure parent directory exists
+        parent_dir = os.path.dirname(file_path) or "."
+        log.debug("Creating parent directory if missing: %s", parent_dir)
+        os.makedirs(parent_dir, exist_ok=True)
+        log.info("Parent directory ready: %s", parent_dir)
+
+        with open(file_path, "w") as file:
+            json.dump(dict, file, indent=4)
+            log.info("Json successfully saved at: %s", file_path)
+
+    except Exception as e:
+        raise DetailedException(exc=e, logger=log) from e
+
+def load_json(
+    file_path: str,
+    logger: Optional[logging.Logger] = None
+) -> dict:
+    """
+    Load a JSON file into a Python dictionary.
+
+    :param file_path: Full path to the JSON file.
+    :param logger:    Optional logger; falls back to DEFAULT_LOGGER if None.
+    :return:          The loaded dictionary.
+    :raises FileNotFoundError: If the file does not exist.
+    :raises DetailedException: For any I/O or JSON parsing errors.
+    """
+    try:
+        log = logger or DEFAULT_LOGGER
+        log.info("Entered load_json; target path: %s", file_path)
+        
+        if not os.path.exists(file_path):
+            logger.error("File Not Found : %s", file_path)
+            raise FileNotFoundError(f"{file_path} does not exist.")
+        
+        with open(file_path, "r") as file:
+            loaded_dict = json.load(file)
+            log.info("Json Successfully Loaded from: %s", file_path)
+    
+    except Exception as e:
+        raise DetailedException(exc=e, logger=log) from e
+
+
+
 
 
 

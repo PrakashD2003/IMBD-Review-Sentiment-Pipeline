@@ -66,7 +66,7 @@ class FeatureEngineering:
         :raises DetailedException: If fitting or transformation fails.
         """
         try:
-            logger.info("Fitting TfidfVectorizer on the entire training data…")
+            logger.info("Fitting TfidfVectorizer on the entire training data...")
 
             # Build vocabulary on the full column in memory
             full_series: pd.Series = train_ddf[column].compute()

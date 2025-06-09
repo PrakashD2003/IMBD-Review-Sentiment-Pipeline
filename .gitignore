@@ -1,6 +1,10 @@
+saved_models
+reports
+
 # Local Terraform CLI files
 .terraform/
 .terraform.lock.hcl
+
 
 # Terraform plan files
 *.tfplan

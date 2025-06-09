@@ -14,5 +14,5 @@ colorlog
 mypy_boto3_s3
 dill
 dask
-dask_ml
+dask-ml
 -e .

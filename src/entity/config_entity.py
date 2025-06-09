@@ -9,8 +9,8 @@ class DataIngestionConfig:
     raw_data_file_path:str = os.path.join(RAW_DATA_FILE_DIR_NAME, f"{LOG_SESSION_TIME}.csv")
     training_data_file_path:str = os.path.join(data_ingestion_dir,TRAINING_DATA_FILE_NAME)
     test_data_file_path:str = os.path.join(data_ingestion_dir,TEST_DATA_FILE_NAME)
-    s3_bucket:str = os.getenv(S3_DATA_BUCKET_ENV) or S3_DATA_BUCKET
-    s3_data_file_key:str = os.getenv(S3_DATA_FILE_PREFIX_ENV) or S3_DATA_FILE_PREFIX
+    s3_bucket:str = S3_DATA_BUCKET_ENV or S3_DATA_BUCKET
+    s3_data_file_key:str = S3_DATA_FILE_PREFIX_ENV or S3_DATA_FILE_PREFIX
 
 @dataclass
 class DataPreprocessingConfig:
@@ -21,7 +21,19 @@ class DataPreprocessingConfig:
 @dataclass
 class FeatureEngineeringConfig:
     feature_engineered_data_dir:str = os.path.join(DATA_DIR_NAME, FEATURE_ENGINEERING_DATA_DIR)
-    vectorizer_obj_dir:str = os.path.join(MODEL_OBJ_DIR, VECTORIZER_OBJ_DIR)
+    vectorizer_obj_dir:str = os.path.join(OBJ_SAVE_DIR, VECTORIZER_OBJ_DIR)
+    vectorizer_obj_file_path:str = os.path.join(vectorizer_obj_dir, VECTORIZER_OBJ_FILE_NAME)
     feature_engineered_training_data_file_path:str = os.path.join(feature_engineered_data_dir, FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME)
     feature_engineered_test_data_file_path:str = os.path.join(feature_engineered_data_dir, FEATURE_ENGINEERED_TEST_DATA_FILE_NAME)
-    vectorizer_obj_file_path:str = os.path.join(vectorizer_obj_dir, VECTORIZER_OBJ_FILE_NAME)
+@dataclass
+class ModelTrainerConfig:
+    model_obj_dir:str = os.path.join(OBJ_SAVE_DIR, TRAINED_MODEL_OBJ_DIR)
+    trained_model_obj_path:str = os.path.join(model_obj_dir, TRAINED_MODEL_OBJ_NAME)
+
+@dataclass
+class ModelEvaluationConfig:
+    mlflow_uri:str = MLFLOW_TRACKING_URI
+    performance_metrics_file_save_path:str = os.path.join(METRICS_DIR_PATH, PERFORMANCE_METRICS_FILE_NAME)
+    experiment_info_file_save_paht:str = os.path.join(METRICS_DIR_PATH, EXPERIMENT_INFO_FILE_NAME)
+    mlflow_model_name:str = MLFLOW_REGISTRY_MODEL_NAME
+    mlflow_vectorizer_name:str = MLFLOW_REGISTRY_VECTORIZER_NAME
