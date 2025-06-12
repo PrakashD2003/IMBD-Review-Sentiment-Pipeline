@@ -11,7 +11,7 @@ class DataIngestionConfig:
     s3_bucket:str = S3_DATA_BUCKET_ENV or S3_DATA_BUCKET
     s3_data_file_key:str = S3_DATA_FILE_PREFIX_ENV or S3_DATA_FILE_PREFIX
     # dask_partition_block_size = DASK_PARTITION_BLOCK_SIZE
-    n_partitions:str = N_PARTITONS
+    n_partitions:str = N_PARTITIONS
 
 @dataclass
 class DataPreprocessingConfig:

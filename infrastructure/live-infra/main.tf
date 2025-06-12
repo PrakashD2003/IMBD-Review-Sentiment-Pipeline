@@ -1,9 +1,12 @@
 module "s3" {
-  source            = "../modules/s3"
-  bucket_name       = var.bucket_name
-  enable_sse        = var.enable_sse
-  sse_algorithm     = var.sse_algorithm
-  enable_versioning = var.enable_versioning
-  force_destroy     = var.force_destroy
-  s3_tags           = var.s3_tags
+  source   = "../modules/s3"
+  for_each = var.s3_buckets
+
+  bucket_name       = each.value.bucket_name
+  enable_sse        = each.value.enable_sse
+  sse_algorithm     = each.value.sse_algorithm
+  enable_versioning = each.value.enable_versioning
+  force_destroy     = each.value.force_destroy
+  s3_tags           = each.value.s3_tags
 }
+

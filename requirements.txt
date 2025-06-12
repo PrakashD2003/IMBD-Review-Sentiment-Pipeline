@@ -17,4 +17,5 @@ dill
 dask
 dask-ml
 s3fs
+bokeh>=3.1.0
 -e .

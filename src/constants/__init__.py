@@ -19,10 +19,11 @@ S3_DATA_BUCKET_ENV:str = os.getenv("S3_DATA_BUCKET_ENV")
 S3_DATA_BUCKET:str = "imbd-capstone-proj-bucket"
 S3_DATA_FILE_PREFIX_ENV:str = os.getenv("S3_DATA_FILE_NAME_ENV")
 S3_DATA_FILE_PREFIX:str = "data/IMDB Dataset.parquet"
-N_PARTITONS:int = int(os.getenv("N_PARTITIONS")) or 3
+N_PARTITIONS: int = int(os.getenv("N_PARTITONS", "3"))
+
+
 ### Data Preprocessing Constants ###
 DATA_PREPROCESSING_DIR:str = "processed"
-
 PREPROCESSED_TRAINED_DATA_FILE_NAME = "preprocessed_training_data"
 PREPROCESSED_TEST_DATA_FILE_NAME = "preprocessed_test_data"
 
@@ -108,7 +109,7 @@ MLFLOW_REGISTRY_VECTORIZER_NAME:str = "vectorizer"
 # S3_DATA_BUCKET_ENV:str = "S3_DATA_BUCKET_ENV"
 # S3_DATA_FILE_PREFIX_ENV:str = "S3_DATA_FILE_NAME_ENV"
 # DASK_PARTITION_BLOCK_SIZE:str = "DASK_PARTITION_BLOCK_SIZE"
-
+# N_PARTITIONS: int
 
 
 ### AWS Credentials ###
@@ -124,3 +125,7 @@ EXPERIMENT_NAME:str =  os.getenv("EXPERIMENT_NAME") or "MY-DVC-PIPELINE"
 MODEL_NAME:str = os.getenv("MODEL_NAME") or "IMBD-REVIEW-SENTIMENT-ANALYSIS-PROJECT-MODEL"
 VECTORIZER_NAME:str = os.getenv("VECTORIZER_NAME") or "IMBD-REVIEW-SENTIMENT-ANALYSIS-PROJECT-VECTORIZER"
 MODEL_STAGE:str = os.getenv("MODEL_STAGE") or "Staging"
+
+
+### Trainig Pipeline Variables ###
+DASK_SCHEDULER_ADDRESS = os.getenv("DASK_SCHEDULER_ADDRESS")

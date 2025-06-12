@@ -1,7 +1,8 @@
 stages:
   data_ingestion:
-    cmd: python src/data/data_ingestion.py
+    cmd: python ./src/pipelines/training_pipeline.py --step ingestion
     deps:
+      - ./src/pipelines/training_pipeline.py
       - src/data/data_ingestion.py
       - params.yaml
     params:
@@ -9,17 +10,18 @@ stages:
       - data_ingestion_params.random_state
       - data_ingestion_params.shuffle
     outs:
+      - data/raw
       - data/interim/train
       - data/interim/test
-      - data/raw
 
   data_preprocessing:
-    cmd: python src/data/data_preprecessing.py
+    cmd: python ./src/pipelines/training_pipeline.py --step preprocess
     deps:
-      - src/data/data_preprecessing.py
-      - params.yaml
+      - ./src/pipelines/training_pipeline.py
+      - src/data/data_preprocessing.py
       - data/interim/train
       - data/interim/test
+      - params.yaml
     params:
       - data_preprocessing_params.text_column_for_preprocessing
     outs:
@@ -27,12 +29,13 @@ stages:
       - data/processed/preprocessed_test_data
 
   feature_engineering:
-    cmd: python src/features/feature_engineering.py
+    cmd: python ./src/pipelines/training_pipeline.py --step fe
     deps:
+      - ./src/pipelines/training_pipeline.py
       - src/features/feature_engineering.py
-      - params.yaml
       - data/processed/preprocessed_training_data
       - data/processed/preprocessed_test_data
+      - params.yaml
     params:
       - feature_engineering_params.text_column_for_engineering
       - TF-IDF_Params.max_df
@@ -45,11 +48,12 @@ stages:
       - saved_models/vectorizer
 
   model_training:
-    cmd: python src/model/train_model.py
+    cmd: python ./src/pipelines/training_pipeline.py --step train
     deps:
+      - ./src/pipelines/training_pipeline.py
       - src/model/train_model.py
-      - params.yaml
       - data/feature_engineered/feature_engineered_training_data
+      - params.yaml
     params:
       - Target_Col
       - Model_Params.C
@@ -62,22 +66,23 @@ stages:
       - saved_models/model
 
   model_evaluation:
-    cmd: python src/model/evaluate_model.py
+    cmd: python ./src/pipelines/training_pipeline.py --step evaluate
     deps:
+      - ./src/pipelines/training_pipeline.py
       - src/model/evaluate_model.py
-      - params.yaml
       - data/feature_engineered/feature_engineered_test_data
+      - params.yaml
     params:
       - Target_Col
     metrics:
       - reports/performance_metrics.json
 
   model_registry:
-    cmd: python src/model/register_model.py
+    cmd: python ./src/pipelines/training_pipeline.py --step register
     deps:
+      - ./src/pipelines/training_pipeline.py
       - src/model/register_model.py
-      - params.yaml
       - saved_models/model
       - saved_models/vectorizer
       - reports/performance_metrics.json
-    # no outs or metrics here, it only consumes the metric and pushes to MLflow
+      - params.yaml
