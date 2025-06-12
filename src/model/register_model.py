@@ -74,18 +74,22 @@ class ModelRegistry:
         
     def register_model(self, run_id:str, model_name:str, stage:str):
         """
-        Registers the model in the MLflow Model Registry and transitions it to a given stage.
+        Register a logged MLflow model under a given name and transition it to a stage.
 
         Args:
-            run_id (str): The MLflow run ID where the model was logged.
-            model_name (str): The name of the model in the registry.
-            stage (str): The stage to transition the model to (default is "Staging").
+            run_id:     MLflow run ID containing the logged model artifact.
+            model_name: Registered model name in the MLflow Model Registry.
+            stage:      Stage to transition the new version to (e.g. "Staging" or "Production").
 
         Returns:
-            str: The version number of the registered model.
+            The new model version as a string.
+
+        Raises:
+            DetailedException: If registration or transition fails.
         """
+    
         try:
-            result = mlflow.register_model(model_uri=f"runs:/{run_id}/model", name=model_name)
+            result = mlflow.register_model(model_uri=f"runs:/{run_id}/model_{run_id}", name=model_name)
 
             mlflow.tracking.MlflowClient().transition_model_version_stage(name=model_name,
                                                                           version=result.version,
@@ -129,9 +133,9 @@ class ModelRegistry:
                 logger.info("Model Successfully Loaded.")
 
                 logger.debug("Logging Model in Mlflow experiment: %s",run.info.run_id )
-                mlflow.sklearn.log_model(model, "model")
+                mlflow.sklearn.log_model(model, f"model_{run.info.run_id}")
                 logger.debug("Successfully Logged Model in Mlflow experiment.")
-                model_params = self.params.get("Model_Parameters", {})
+                model_params = self.params.get("Model_Params", {})
                 if model_params is None:
                     raise RuntimeError("Loaded model_params is None")
                 logger.debug("Logging Model Parameters: '%s' in Mlflow experiment: %s", model_params, run.info.run_id )
@@ -150,7 +154,7 @@ class ModelRegistry:
                 logger.info("Vectorizer Successfully Loaded.")
                 
                 logger.debug("Logging Vectorizer in Mlflow experiment: %s",run.info.run_id )
-                mlflow.sklearn.log_model(vectorizer, "vectorizer")
+                mlflow.sklearn.log_model(vectorizer, f"vectorizer_{run.info.run_id}")
                 logger.debug("Successfully Logged Vectorizer in Mlflow experiment.")
                 
                 vectorizer_params = self.params.get("TF-IDF_Params", {})

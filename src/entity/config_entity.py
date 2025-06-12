@@ -1,12 +1,11 @@
 import os
 from dataclasses import dataclass
-from src.logger.global_logging import LOG_SESSION_TIME
 from src.constants import *
 
 @dataclass
 class DataIngestionConfig:
     data_ingestion_dir:str = os.path.join(DATA_DIR_NAME,DATA_INGESTION_DIR_NAME)
-    raw_data_file_path:str = os.path.join(DATA_DIR_NAME, RAW_DATA_FILE_DIR_NAME, f"{LOG_SESSION_TIME}.parquet")
+    raw_data_file_path:str = os.path.join(DATA_DIR_NAME, RAW_DATA_FILE_DIR_NAME)
     training_data_file_path:str = os.path.join(data_ingestion_dir,TRAINING_DATA_FILE_NAME)
     test_data_file_path:str = os.path.join(data_ingestion_dir,TEST_DATA_FILE_NAME)
     s3_bucket:str = S3_DATA_BUCKET_ENV or S3_DATA_BUCKET

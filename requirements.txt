@@ -10,6 +10,7 @@ jupyter
 nltk
 xgboost
 dvc
+dvc[s3]
 colorlog
 mypy_boto3_s3
 dill

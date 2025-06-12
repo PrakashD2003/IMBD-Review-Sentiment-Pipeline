@@ -1,0 +1,195 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python src/data/data_ingestion.py
+    deps:
+    - path: params.yaml
+      hash: md5
+      md5: 7b4163c335301ce12a0795ac5c4152e9
+      size: 918
+    - path: src/data/data_ingestion.py
+      hash: md5
+      md5: 8bd8b9d373efb581e53834bfb87799c7
+      size: 8028
+    params:
+      params.yaml:
+        data_ingestion_params.random_state: 42
+        data_ingestion_params.shuffle: true
+        data_ingestion_params.test_size: 0.2
+    outs:
+    - path: data/interim/test
+      hash: md5
+      md5: 5a5071302e770a3e581ddad199f98def.dir
+      size: 8647725
+      nfiles: 3
+    - path: data/interim/train
+      hash: md5
+      md5: c509e4acab63abc5c4062438a611e8eb.dir
+      size: 34064652
+      nfiles: 3
+    - path: data/raw
+      hash: md5
+      md5: 9a2cb922182ac01b7b86b96ddde06cf2.dir
+      size: 42675542
+      nfiles: 1
+  data_preprocessing:
+    cmd: python src/data/data_preprecessing.py
+    deps:
+    - path: data/interim/test
+      hash: md5
+      md5: 5a5071302e770a3e581ddad199f98def.dir
+      size: 8647725
+      nfiles: 3
+    - path: data/interim/train
+      hash: md5
+      md5: c509e4acab63abc5c4062438a611e8eb.dir
+      size: 34064652
+      nfiles: 3
+    - path: params.yaml
+      hash: md5
+      md5: 7b4163c335301ce12a0795ac5c4152e9
+      size: 918
+    - path: src/data/data_preprecessing.py
+      hash: md5
+      md5: 5d8e961fead67798adec70e285ea7885
+      size: 8026
+    params:
+      params.yaml:
+        data_preprocessing_params.text_column_for_preprocessing: review
+    outs:
+    - path: data/processed/preprocessed_test_data
+      hash: md5
+      md5: 54950f65309c876b796b0c40e0ee6f9b.dir
+      size: 5363164
+      nfiles: 3
+    - path: data/processed/preprocessed_training_data
+      hash: md5
+      md5: 61b4d85c183eb30d5dfee86c8bbf95c4.dir
+      size: 21090046
+      nfiles: 3
+  feature_engineering:
+    cmd: python src/features/feature_engineering.py
+    deps:
+    - path: data/processed/preprocessed_test_data
+      hash: md5
+      md5: 54950f65309c876b796b0c40e0ee6f9b.dir
+      size: 5363164
+      nfiles: 3
+    - path: data/processed/preprocessed_training_data
+      hash: md5
+      md5: 61b4d85c183eb30d5dfee86c8bbf95c4.dir
+      size: 21090046
+      nfiles: 3
+    - path: params.yaml
+      hash: md5
+      md5: 7b4163c335301ce12a0795ac5c4152e9
+      size: 918
+    - path: src/features/feature_engineering.py
+      hash: md5
+      md5: 16bbefdd60e80fdc8d5a6efd9665ae8e
+      size: 11126
+    params:
+      params.yaml:
+        TF-IDF_Params.max_df: 0.9
+        TF-IDF_Params.max_features: 5000
+        TF-IDF_Params.min_df: 2
+        TF-IDF_Params.ngram_range:
+        - 1
+        - 1
+        feature_engineering_params.text_column_for_engineering: review
+    outs:
+    - path: data/feature_engineered/feature_engineered_test_data
+      hash: md5
+      md5: df8983101a812a143bce8165b3a5021d.dir
+      size: 19114770
+      nfiles: 3
+    - path: data/feature_engineered/feature_engineered_training_data
+      hash: md5
+      md5: cb2dca8f908253417293e8fefceb519d.dir
+      size: 51918935
+      nfiles: 3
+    - path: saved_models/vectorizer
+      hash: md5
+      md5: 8193c6cfcbc1a8ceb5fc43db49e7083c.dir
+      size: 183126
+      nfiles: 1
+  model_training:
+    cmd: python src/model/train_model.py
+    deps:
+    - path: data/feature_engineered/feature_engineered_training_data
+      hash: md5
+      md5: cb2dca8f908253417293e8fefceb519d.dir
+      size: 51918935
+      nfiles: 3
+    - path: params.yaml
+      hash: md5
+      md5: 7b4163c335301ce12a0795ac5c4152e9
+      size: 918
+    - path: src/model/train_model.py
+      hash: md5
+      md5: 68a81e8076b0c4ecd1cc7b0b381e42fb
+      size: 6430
+    params:
+      params.yaml:
+        Model_Params.C: 0.1
+        Model_Params.max_iter: 300
+        Model_Params.penalty: l2
+        Model_Params.random_state: 42
+        Model_Params.solver: lbfgs
+        Model_Params.tol: 0.001
+        Target_Col: sentiment
+    outs:
+    - path: saved_models/model
+      hash: md5
+      md5: cb012fbbc7183163d094b91edd6ba1a7.dir
+      size: 80578
+      nfiles: 1
+  model_evaluation:
+    cmd: python src/model/evaluate_model.py
+    deps:
+    - path: data/feature_engineered/feature_engineered_test_data
+      hash: md5
+      md5: df8983101a812a143bce8165b3a5021d.dir
+      size: 19114770
+      nfiles: 3
+    - path: params.yaml
+      hash: md5
+      md5: 7b4163c335301ce12a0795ac5c4152e9
+      size: 918
+    - path: src/model/evaluate_model.py
+      hash: md5
+      md5: 5ae9e4f459b4ecee7aca67cd99006425
+      size: 8170
+    params:
+      params.yaml:
+        Target_Col: sentiment
+    outs:
+    - path: reports/performance_metrics.json
+      hash: md5
+      md5: 671e8497761381ca00fef74c49f8559f
+      size: 149
+  model_registry:
+    cmd: python src/model/register_model.py
+    deps:
+    - path: params.yaml
+      hash: md5
+      md5: 7b4163c335301ce12a0795ac5c4152e9
+      size: 918
+    - path: reports/performance_metrics.json
+      hash: md5
+      md5: 671e8497761381ca00fef74c49f8559f
+      size: 149
+    - path: saved_models/model
+      hash: md5
+      md5: cb012fbbc7183163d094b91edd6ba1a7.dir
+      size: 80578
+      nfiles: 1
+    - path: saved_models/vectorizer
+      hash: md5
+      md5: 8193c6cfcbc1a8ceb5fc43db49e7083c.dir
+      size: 183126
+      nfiles: 1
+    - path: src/model/register_model.py
+      hash: md5
+      md5: db0142832994e5bf72971cc1c27e8736
+      size: 9942

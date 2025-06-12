@@ -19,7 +19,7 @@ S3_DATA_BUCKET_ENV:str = os.getenv("S3_DATA_BUCKET_ENV")
 S3_DATA_BUCKET:str = "imbd-capstone-proj-bucket"
 S3_DATA_FILE_PREFIX_ENV:str = os.getenv("S3_DATA_FILE_NAME_ENV")
 S3_DATA_FILE_PREFIX:str = "data/IMDB Dataset.parquet"
-N_PARTITONS:int = os.getenv("N_PARTITIONS") or 3
+N_PARTITONS:int = int(os.getenv("N_PARTITIONS")) or 3
 ### Data Preprocessing Constants ###
 DATA_PREPROCESSING_DIR:str = "processed"
 
