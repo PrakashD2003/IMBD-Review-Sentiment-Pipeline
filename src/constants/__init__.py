@@ -1,48 +1,41 @@
 import os
-### Dask Credentials ###
+
 # Read the SINGLE_FILE variable and interpret common truthy values
 _sflag = os.getenv("SINGLE_FILE", "").strip().lower()
-SINGLE_FILE: bool = _sflag in ("1", "true", "yes")
+SINGLE_FILE: bool = False #_sflag in ("1", "true", "yes")
 
 
 ### Params(yaml file) Constants ###
-PARAM_FILE_PATH = ""
+PARAM_FILE_PATH = "params.yaml"
 
 ### Data Ingestion Constants ###
 DATA_DIR_NAME:str = "data"
 DATA_INGESTION_DIR_NAME:str = "interim"
 RAW_DATA_FILE_DIR_NAME = "raw"
-if SINGLE_FILE:
-    TRAINING_DATA_FILE_NAME: str = "train.csv"
-    TEST_DATA_FILE_NAME:     str = "test.csv"
-else:
-    TRAINING_DATA_FILE_NAME: str = "train-*.csv"
-    TEST_DATA_FILE_NAME:     str = "test-*.csv"
+
+TRAINING_DATA_FILE_NAME: str = "train"
+TEST_DATA_FILE_NAME:     str = "test"
 S3_DATA_BUCKET_ENV:str = os.getenv("S3_DATA_BUCKET_ENV")
 S3_DATA_BUCKET:str = "imbd-capstone-proj-bucket"
 S3_DATA_FILE_PREFIX_ENV:str = os.getenv("S3_DATA_FILE_NAME_ENV")
-S3_DATA_FILE_PREFIX:str = "data/IMDB Dataset.csv"
-
+S3_DATA_FILE_PREFIX:str = "data/IMDB Dataset.parquet"
+N_PARTITONS:int = os.getenv("N_PARTITIONS") or 3
 ### Data Preprocessing Constants ###
 DATA_PREPROCESSING_DIR:str = "processed"
-if SINGLE_FILE:
-    PREPROCESSED_TRAINED_DATA_FILE_NAME = "preprocessed_training_data.csv"
-    PREPROCESSED_TEST_DATA_FILE_NAME = "preprocessed_test_data.csv"
-else:
-    PREPROCESSED_TRAINED_DATA_FILE_NAME = "preprocessed_training_data-*.csv"
-    PREPROCESSED_TEST_DATA_FILE_NAME = "preprocessed_test_data-*.csv"
+
+PREPROCESSED_TRAINED_DATA_FILE_NAME = "preprocessed_training_data"
+PREPROCESSED_TEST_DATA_FILE_NAME = "preprocessed_test_data"
+
+    
 
 ### Feature Engineering Constants ###
 OBJ_SAVE_DIR:str = "saved_models"
 VECTORIZER_OBJ_DIR:str = "vectorizer"
 VECTORIZER_OBJ_FILE_NAME:str = "vectorizer.pkl"
 FEATURE_ENGINEERING_DATA_DIR:str = "feature_engineered"
-if SINGLE_FILE:
-    FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME:str = "feature_engineered_training_data.csv"
-    FEATURE_ENGINEERED_TEST_DATA_FILE_NAME:str = "feature_engineered_test_data.csv"
-else:
-    FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME:str = "feature_engineered_training_data-*.csv"
-    FEATURE_ENGINEERED_TEST_DATA_FILE_NAME:str = "feature_engineered_test_data-*.csv"
+FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME:str = "feature_engineered_training_data"
+FEATURE_ENGINEERED_TEST_DATA_FILE_NAME:str = "feature_engineered_test_data"
+
 
 ### Model Training Constants ###
 TRAINED_MODEL_OBJ_DIR:str = "model"
@@ -55,12 +48,66 @@ EXPERIMENT_INFO_FILE_NAME:str = "experiment_info.json"
 MLFLOW_REGISTRY_MODEL_NAME:str = "model"
 MLFLOW_REGISTRY_VECTORIZER_NAME:str = "vectorizer"
 
+
+################################################# CSV Variables ####################################################
+# ### Params(yaml file) Constants ###
+# PARAM_FILE_PATH = "params.yaml"
+
+# ### Data Ingestion Constants ###
+# DATA_DIR_NAME:str = "data"
+# DATA_INGESTION_DIR_NAME:str = "interim"
+# RAW_DATA_FILE_DIR_NAME = "raw"
+# if SINGLE_FILE:
+#     TRAINING_DATA_FILE_NAME: str = "train.csv"
+#     TEST_DATA_FILE_NAME:     str = "test.csv"
+# else:
+#     TRAINING_DATA_FILE_NAME: str = "train-*.csv"
+#     TEST_DATA_FILE_NAME:     str = "test-*.csv"
+# S3_DATA_BUCKET_ENV:str = os.getenv("S3_DATA_BUCKET_ENV")
+# S3_DATA_BUCKET:str = "imbd-capstone-proj-bucket"
+# S3_DATA_FILE_PREFIX_ENV:str = os.getenv("S3_DATA_FILE_NAME_ENV")
+# S3_DATA_FILE_PREFIX:str = "data/IMDB Dataset.csv"
+# DASK_PARTITION_BLOCK_SIZE:str = os.getenv("DASK_PARTITION_BLOCK_SIZE") or "16 Mib"
+
+# ### Data Preprocessing Constants ###
+# DATA_PREPROCESSING_DIR:str = "processed"
+# if SINGLE_FILE:
+#     PREPROCESSED_TRAINED_DATA_FILE_NAME = "preprocessed_training_data.csv"
+#     PREPROCESSED_TEST_DATA_FILE_NAME = "preprocessed_test_data.csv"
+# else:
+#     PREPROCESSED_TRAINED_DATA_FILE_NAME = "preprocessed_training_data-*.csv"
+#     PREPROCESSED_TEST_DATA_FILE_NAME = "preprocessed_test_data-*.csv"
+
+# ### Feature Engineering Constants ###
+# OBJ_SAVE_DIR:str = "saved_models"
+# VECTORIZER_OBJ_DIR:str = "vectorizer"
+# VECTORIZER_OBJ_FILE_NAME:str = "vectorizer.pkl"
+# FEATURE_ENGINEERING_DATA_DIR:str = "feature_engineered"
+# if SINGLE_FILE:
+#     FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME:str = "feature_engineered_training_data.csv"
+#     FEATURE_ENGINEERED_TEST_DATA_FILE_NAME:str = "feature_engineered_test_data.csv"
+# else:
+#     FEATURE_ENGINEERED_TRAINING_DATA_FILE_NAME:str = "feature_engineered_training_data-*.csv"
+#     FEATURE_ENGINEERED_TEST_DATA_FILE_NAME:str = "feature_engineered_test_data-*.csv"
+
+# ### Model Training Constants ###
+# TRAINED_MODEL_OBJ_DIR:str = "model"
+# TRAINED_MODEL_OBJ_NAME:str = "model.pkl"
+
+# ### Model Evaluation Constants ###
+# METRICS_DIR_PATH:str = "reports"
+# PERFORMANCE_METRICS_FILE_NAME:str = "performance_metrics.json" 
+# EXPERIMENT_INFO_FILE_NAME:str = "experiment_info.json"
+# MLFLOW_REGISTRY_MODEL_NAME:str = "model"
+# MLFLOW_REGISTRY_VECTORIZER_NAME:str = "vectorizer"
+
 ################################################# ENV Variables ####################################################
 # SINGLE_FILE
 
 ### Data Ingestion Constants ###
 # S3_DATA_BUCKET_ENV:str = "S3_DATA_BUCKET_ENV"
 # S3_DATA_FILE_PREFIX_ENV:str = "S3_DATA_FILE_NAME_ENV"
+# DASK_PARTITION_BLOCK_SIZE:str = "DASK_PARTITION_BLOCK_SIZE"
 
 
 

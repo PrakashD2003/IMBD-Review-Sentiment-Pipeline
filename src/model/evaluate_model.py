@@ -1,14 +1,22 @@
 import dask.dataframe as ddf
-from pandas import DataFrame
+from pathlib import Path
+from numpy import ndarray
 from dask import delayed
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score 
-from logger import configure_logger
-from exception import DetailedException
-from utils.main_utils import load_dask_dataframe, load_object, save_json
-from entity.config_entity import ModelEvaluationConfig
-from entity.artifact_entity import ModelTrainerArtifact, ModelEvaluationArtifact, FeatureEngineeringArtifact
 
-logger = configure_logger(logger_name=__name__, level="DEBUG", to_console=True, to_file=True, log_file_name=__name__)
+from src.logger import configure_logger
+from src.exception import DetailedException
+from src.utils.main_utils import load_parquet_as_dask_dataframe, load_object, save_json, load_params
+from src.entity.config_entity import ModelEvaluationConfig
+from src.entity.artifact_entity import ModelTrainerArtifact, ModelEvaluationArtifact, FeatureEngineeringArtifact
+from src.constants import PARAM_FILE_PATH
+
+module_name = Path(__file__).stem
+
+logger = configure_logger(logger_name=module_name, 
+                          level="DEBUG", to_console=True, 
+                          to_file=True, 
+                          log_file_name=module_name)
 
 class ModelEvaluation:
     """
@@ -24,7 +32,9 @@ class ModelEvaluation:
         feature_engineering_artifact (FeatureEngineeringArtifact): Artifact with
             paths to the feature-engineered test dataset.
     """
-    def __init__(self, model_evaluation_config:ModelEvaluationConfig, model_trainer_artifact:ModelTrainerArtifact, feature_engineering_artifact:FeatureEngineeringArtifact):
+    def __init__(self, model_evaluation_config:ModelEvaluationConfig = ModelEvaluationConfig(),
+                 model_trainer_artifact:ModelTrainerArtifact = ModelTrainerArtifact(), 
+                 feature_engineering_artifact:FeatureEngineeringArtifact = FeatureEngineeringArtifact()):
         """
         Initialize the ModelEvaluation component.
 
@@ -38,35 +48,39 @@ class ModelEvaluation:
             self.model_evaluation_config = model_evaluation_config
             self.model_trainer_artifact = model_trainer_artifact
             self.feature_engineering_artifact = feature_engineering_artifact
+            self.params = load_params(params_path=PARAM_FILE_PATH, logger=logger)
             logger.info("ModelEvaluation class configured successfully.")
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
         
         
-    def evaluate_model(self, model:object, test_ddf: ddf.DataFrame)->dict:
+    def evaluate_model(self, model:object, test_ddf: ddf.DataFrame, target_col:str)->dict:
         """
-        Evaluate the trained model on the test set and compute key
-        performance metrics (accuracy, precision, recall, F1) using
-        Dask-delayed execution for parallelism.
+        Evaluate a trained model on a Dask‐DataFrame test set.
 
         Steps:
-          1. Split the Dask DataFrame into features and label.
-          2. Compute the test set into pandas once for in-memory use.
-          3. Wrap sklearn metric calls in a Dask-delayed function.
-          4. Compute all metrics in parallel.
+          1. Persist the Dask DataFrame and split into features (all columns
+             except `target_col`) and labels (`target_col`).
+          2. Convert both to NumPy arrays and pull into memory.
+          3. Wrap sklearn metric calls (accuracy, precision, recall, F1)
+             in a Dask‐delayed function for parallel execution.
+          4. Compute and return metrics.
 
-        :param model:    The trained model with .predict() method.
-        :param test_ddf: Dask DataFrame containing the test features and label
-                         (label in the last column).
-        :return:         A dictionary with keys 'accuracy', 'precision',
-                         'recall', and 'f1_score'.
-        :raises DetailedException: On any failure during evaluation.
+        :param model:      A fitted classifier with a .predict() method.
+        :param test_ddf:   Dask DataFrame containing feature columns plus
+                           the label column named by `target_col`.
+        :param target_col: Name of the column in `test_ddf` to use as the label.
+        :return:           A dict with keys "accuracy", "precision",
+                           "recall", and "f1_score".
+        :raises DetailedException: On any failure during splitting,
+                                   conversion or metric computation.
         """
         try:
-            logger.info("Enterd 'evaluate_model' function of 'ModelEvaluation' class")
+            logger.info("Entered 'evaluate_model' function of 'ModelEvaluation' class")
             logger.debug("Splitting test_data into 'dependent' and 'independet' features...")
-            X_test = test_ddf.iloc[:, :-1]
-            y_test = test_ddf.iloc[:, -1]
+            test_ddf = test_ddf.persist()
+            X_test = test_ddf.drop(columns=[target_col]).to_dask_array(lengths=True)
+            y_test = test_ddf[target_col].astype(int).to_dask_array(lengths=True)
 
             # Pull into memory as pandas once
             X_test_in_mem = X_test.compute()
@@ -75,11 +89,12 @@ class ModelEvaluation:
             logger.info("Test data splitted successfully.")
             
             @delayed
-            def evaluate(model:object, X_test_in_mem:DataFrame, y_test_in_mem:DataFrame)->dict:
+            def evaluate(model:object, X_test_in_mem:ndarray, y_test_in_mem:ndarray)->dict:
                 """
-                Compute sklearn metrics on in‐memory Pandas Dataframe.
+                Compute sklearn metrics on in‐memory NumPy arrays.
                 """
-                y_pred = model.predict(X_test_in_mem)
+                y_pred_raw = model.predict(X_test_in_mem)
+                y_pred = y_pred_raw.astype(int)
                 return {
                     "accuracy":  accuracy_score(y_test_in_mem, y_pred),
                     "precision": precision_score(y_test_in_mem, y_pred),
@@ -109,12 +124,12 @@ class ModelEvaluation:
         :raises DetailedException: On any failure in the workflow.
         """
         try:
-            logger.info("Entered 'initiate_feature_engineering' method of 'FeatureEngineering' class")
+            logger.info("Entered 'initiate_model_evaluation' method of 'ModelEvaluation' class")
             print("\n" + "-"*80)
-            print("🚀 Starting Feature Engineering Component...")
+            print("🚀 Starting Model Evaluation Component...")
 
             logger.debug("Loading Test data from: %s",self.feature_engineering_artifact.feature_engineered_test_data_file_path)
-            test_ddf = load_dask_dataframe(file_path=self.feature_engineering_artifact.feature_engineered_test_data_file_path,
+            test_ddf = load_parquet_as_dask_dataframe(file_path=self.feature_engineering_artifact.feature_engineered_test_data_file_path,
                                             logger=logger)
             logger.info("Test Data Successfully Loaded.")
 
@@ -124,7 +139,7 @@ class ModelEvaluation:
             logger.info("Model Successfully Loaded.")
 
             logger.debug("Initiating Model Evaluation...")
-            performance_metrics = self.evaluate_model(model=model, test_ddf=test_ddf)
+            performance_metrics = self.evaluate_model(model=model, test_ddf=test_ddf, target_col=self.params.get("Target_Col"))
             logger.info("Model Evaluation Completed.")
 
             logger.debug("Saving Performance Metrics at: %s", self.model_evaluation_config.performance_metrics_file_save_path)
@@ -138,8 +153,9 @@ class ModelEvaluation:
             raise DetailedException(exc=e, logger=logger) from e
 
 
-
-        
+if __name__ == "__main__":
+    model_evalutation = ModelEvaluation()
+    model_evalutation.initiate_model_evaluation()
             
 
 

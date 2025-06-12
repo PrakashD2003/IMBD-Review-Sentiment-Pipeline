@@ -1,0 +1,31 @@
+
+### Data Ingestion Params ###
+data_ingestion_params:
+  test_size: 0.20
+  random_state: 42
+  shuffle: True
+
+### Data Preprocessing Params ###
+data_preprocessing_params:
+   text_column_for_preprocessing: "review"
+
+### Feature Engineering ### 
+feature_engineering_params: 
+    text_column_for_engineering: "review"
+# TF-IDF vectorizer parameters
+TF-IDF_Params:
+  max_df: 0.9
+  max_features: 5000
+  min_df: 2        
+  ngram_range: [1, 1]        # Unigrams only
+  
+### Model Trainer ###
+Target_Col: "sentiment"
+# Logistic Regression model hyperparameters
+Model_Params:
+  C: 0.1                     # Inverse of regularization strength
+  penalty: "l2"              # Regularization norm
+  solver: "lbfgs"             # Solver that supports elasticnet or l2
+  max_iter: 300             # Maximum iterations for convergence
+  tol: 0.001
+  random_state: 42           # Seed for reproducibility

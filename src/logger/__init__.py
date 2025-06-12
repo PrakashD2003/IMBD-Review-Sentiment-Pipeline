@@ -4,7 +4,7 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from pathlib import Path
 from colorlog import ColoredFormatter
-from global_logging import LOG_SESSION_TIME
+from src.logger.global_logging import LOG_SESSION_TIME
 
 LOG_DIR = "logs"
 MAX_LOG_SIZE = 5 * 1024 * 1024  # 5 MB
@@ -31,6 +31,7 @@ def configure_logger(logger_name:str, level:str = "INFO",
     
     # Create or retrieve the logger
     logger = logging.getLogger(name=logger_name)
+    logger.handlers[:] = []
     if logger.hasHandlers():
         logger.handlers.clear()
     
@@ -62,7 +63,7 @@ def configure_logger(logger_name:str, level:str = "INFO",
             log_file_name = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
         log_file_path = log_dir_path / f"{log_file_name}.log"
         file_handeler = RotatingFileHandler(
-            filename= str(log_file_name),
+            filename= str(log_file_path),
             encoding= "utf-8",
             maxBytes= MAX_LOG_SIZE,
             backupCount= BACKUP_COUNT

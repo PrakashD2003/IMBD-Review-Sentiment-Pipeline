@@ -1,6 +1,6 @@
 cookiecutter
 dagshub 
-mlflow
+mlflow==2.22.1 
 scikit-learn
 pandas
 numpy
@@ -15,4 +15,5 @@ mypy_boto3_s3
 dill
 dask
 dask-ml
+s3fs
 -e .

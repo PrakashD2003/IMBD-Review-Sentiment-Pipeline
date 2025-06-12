@@ -1,15 +1,21 @@
 import dagshub
 import mlflow
 import mlflow.sklearn
-from logger import configure_logger
-from exception import DetailedException
-from utils.main_utils import load_object, load_json, load_params
-from entity.config_entity import ModelRegistryConfig
-from entity.artifact_entity import ModelTrainerArtifact, ModelEvaluationArtifact, FeatureEngineeringArtifact
-from constants import PARAM_FILE_PATH
+from pathlib import Path
 
-logger = configure_logger(logger_name=__name__, level="DEBUG", to_console=True, to_file=True, log_file_name=__name__)
+from src.logger import configure_logger
+from src.exception import DetailedException
+from src.utils.main_utils import load_object, load_json, load_params
+from src.entity.config_entity import ModelRegistryConfig
+from src.entity.artifact_entity import ModelTrainerArtifact, ModelEvaluationArtifact, FeatureEngineeringArtifact
+from src.constants import PARAM_FILE_PATH
 
+module_name = Path(__file__).stem
+
+logger = configure_logger(logger_name=module_name, 
+                          level="DEBUG", to_console=True, 
+                          to_file=True, 
+                          log_file_name=module_name)
 
 class ModelRegistry:
     """
@@ -23,10 +29,10 @@ class ModelRegistry:
         feature_engineering_artifact (FeatureEngineeringArtifact): Contains path to the vectorizer.
         params (dict): Model and TF-IDF parameters loaded from params.yaml.
     """
-    def __init__(self, model_registry_config:ModelRegistryConfig, 
-                 model_trainer_artifact:ModelTrainerArtifact, 
-                 model_evaluation_artifact:ModelEvaluationArtifact, 
-                 feature_engineering_artifact:FeatureEngineeringArtifact):
+    def __init__(self, model_registry_config:ModelRegistryConfig = ModelRegistryConfig(), 
+                 model_trainer_artifact:ModelTrainerArtifact = ModelTrainerArtifact(), 
+                 model_evaluation_artifact:ModelEvaluationArtifact = ModelEvaluationArtifact(), 
+                 feature_engineering_artifact:FeatureEngineeringArtifact = FeatureEngineeringArtifact()):
         """
         Initializes the ModelRegistry class with configuration and artifacts.
 
@@ -107,10 +113,12 @@ class ModelRegistry:
 
                 logger.debug("Loading Performance Metrics from: %s", self.model_evaluation_artifact.performance_metrics_file_path)
                 performance_metrics = load_json(file_path=self.model_evaluation_artifact.performance_metrics_file_path, logger=logger)
+                if performance_metrics is None:
+                    raise RuntimeError("Loaded performance_metrics is None")
                 logger.info("Performance Metrics Loaded Successfully.")
 
-                logger.debug("Logging Performance Metrics in Mlflow experiment: %s",run.info.run_id )
-                mlflow.log_params(params = performance_metrics)
+                logger.debug("Logging Performance Metrics: '%s' in Mlflow experiment: %s", performance_metrics, run.info.run_id )
+                mlflow.log_metrics(performance_metrics)
                 logger.debug("Successfully Logged Performance Metrics in Mlflow experiment.")
 
 
@@ -123,13 +131,17 @@ class ModelRegistry:
                 logger.debug("Logging Model in Mlflow experiment: %s",run.info.run_id )
                 mlflow.sklearn.log_model(model, "model")
                 logger.debug("Successfully Logged Model in Mlflow experiment.")
-
-                logger.debug("Logging Model Parameters in Mlflow experiment: %s",run.info.run_id )
-                mlflow.log_params(params= self.params["Model_Parameters"])
+                model_params = self.params.get("Model_Parameters", {})
+                if model_params is None:
+                    raise RuntimeError("Loaded model_params is None")
+                logger.debug("Logging Model Parameters: '%s' in Mlflow experiment: %s", model_params, run.info.run_id )
+                mlflow.log_params(model_params)
                 logger.debug("Successfully Logged Model Parameters in Mlflow experiment.")
 
                 logger.debug("Registering Model in Mlflow Registry...")
-                self.register_model(run_id=run.info.run_id, model_name=self.model_registry_config.mlflow_model_name)
+                self.register_model(run_id=run.info.run_id, 
+                                    model_name=self.model_registry_config.mlflow_model_name, 
+                                    stage=self.model_registry_config.mlflow_model_stage)
                 logger.debug("Successfully Registered Model in Mlflow Registry.")
 
                 logger.debug("Loading Vectorizer from: %s",self.feature_engineering_artifact.vectorizer_obj_file_path)
@@ -140,22 +152,24 @@ class ModelRegistry:
                 logger.debug("Logging Vectorizer in Mlflow experiment: %s",run.info.run_id )
                 mlflow.sklearn.log_model(vectorizer, "vectorizer")
                 logger.debug("Successfully Logged Vectorizer in Mlflow experiment.")
-
-                logger.debug("Logging Vectorizer Parameters in Mlflow experiment: %s",run.info.run_id )
-                mlflow.log_params(params= self.params["TF-IDF_Params"])
+                
+                vectorizer_params = self.params.get("TF-IDF_Params", {})
+                if vectorizer_params is None:
+                    raise RuntimeError("Loaded vectorizer_params is None")
+                logger.debug("Logging Vectorizer Parameters: '%s' in Mlflow experiment: %s", vectorizer_params, run.info.run_id )
+                mlflow.log_params(vectorizer_params)
                 logger.debug("Successfully Logged Vectorizer Parameters in Mlflow experiment.")
 
                 logger.debug("Registering Vectorizer in Mlflow Registry...")
-                self.register_model(run_id=run.info.run_id, model_name=self.model_registry_config.mlflow_vectorizer_name)
+                self.register_model(run_id=run.info.run_id, 
+                                    model_name=self.model_registry_config.mlflow_vectorizer_name, 
+                                    stage=self.model_registry_config.mlflow_model_stage)
                 logger.debug("Successfully Registered Vectorizer in Mlflow Registry.")
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
                 
 
-
-                
-
-
-            
-
-        
+if __name__ == "__main__":
+    model_registry = ModelRegistry()
+    model_registry.initiate_model_registration()
+    

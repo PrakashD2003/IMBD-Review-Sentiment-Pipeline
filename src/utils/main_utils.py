@@ -1,10 +1,11 @@
 import os
 import json
 import dask.dataframe as ddf
+from dask.diagnostics import ProgressBar
 import yaml
 import dill
-from logger import configure_logger
-from exception import DetailedException
+from src.logger import configure_logger
+from src.exception import DetailedException
 from typing import Optional
 import logging
 import pandas as pd
@@ -15,7 +16,7 @@ DEFAULT_LOGGER = configure_logger(
     level="DEBUG",
     to_console=True,
     to_file=True,
-    log_file_name=__name__  # or f"{__name__}.log"
+    log_file_name=__name__  
 )
 
 
@@ -136,7 +137,7 @@ def save_dataframe_as_csv(file_save_path: str, dataframe: pd.DataFrame, index: b
 
 
     
-def load_dask_dataframe(file_path: str, logger: Optional[logging.Logger] = None)-> ddf.DataFrame:
+def load_csv_as_dask_dataframe(file_path: str, logger: Optional[logging.Logger] = None)-> ddf.DataFrame:
     """
     Load a CSV file from disk into a Dask DataFrame, with logging.
 
@@ -150,16 +151,17 @@ def load_dask_dataframe(file_path: str, logger: Optional[logging.Logger] = None)
     try:
         logger = logger or DEFAULT_LOGGER
 
-        logger.debug("Entered 'load_dask_dataframe' function of utils module.")
+        logger.debug("Entered 'load_csv_as_dask_dataframe' function of utils module.")
 
-        if not os.path.exists(file_path):
-            logger.error("File Not Found : %s", file_path)
-            raise FileNotFoundError(f"{file_path} does not exist.")
+        # if not os.path.exists(file_path):
+        #     logger.error("File Not Found : %s", file_path)
+        #     raise FileNotFoundError(f"{file_path} does not exist.")
         
         logger.debug("Loading Csv data from: %s", file_path)
-        dataframe  = ddf.read_csv(file_path)
+        with ProgressBar():
+            dataframe  = ddf.read_csv(file_path)
         logger.info("Data has been successfully loaded from: %s ",file_path)
-        logger.debug("Exiting 'load_dask_dataframe' function and returning 'dask dataframe'.")
+        logger.debug("Exiting 'load_csv_as_dask_dataframe' function and returning 'dask dataframe'.")
         return dataframe
     except FileNotFoundError as e:
         logger.error("File not found: %s", file_path)
@@ -169,6 +171,43 @@ def load_dask_dataframe(file_path: str, logger: Optional[logging.Logger] = None)
         raise
     except Exception as e:
         raise DetailedException(exc=e, logger=logger) from e
+
+def load_parquet_as_dask_dataframe(file_path: str, logger: Optional[logging.Logger] = None)-> ddf.DataFrame:
+    """
+    Load a Parquet dataset from disk into a Dask DataFrame, with logging.
+
+    :param file_path: Path or glob pattern to the Parquet file(s) to load.
+                      Supports wildcards (e.g. "data/*.parquet") or directories.
+    :param logger: Optional Logger instance. If None, uses DEFAULT_LOGGER.
+    :return: A Dask DataFrame representing the contents of the Parquet data.
+    :raises FileNotFoundError: If no file matches the provided path or pattern.
+    :raises IOError: If the Parquet file(s) cannot be read (e.g. corrupted, mismatched schema).
+    :raises DetailedException: For any other errors, wrapped with traceback info.
+    """
+    try:
+        logger = logger or DEFAULT_LOGGER
+
+        logger.debug("Entered 'load_parquet_as_dask_dataframe' function of utils module.")
+
+        # if not os.path.exists(file_path):
+        #     logger.error("File Not Found : %s", file_path)
+        #     raise FileNotFoundError(f"{file_path} does not exist.")
+        
+        logger.debug("Loading Parquet data from: %s", file_path)
+        with ProgressBar():
+            dataframe  = ddf.read_parquet(file_path)
+        logger.info("Data has been successfully loaded from: %s ",file_path)
+        logger.debug("Exiting 'load_parquet_as_dask_dataframe' function and returning 'dask dataframe'.")
+        return dataframe
+    except FileNotFoundError as e:
+        logger.error("File not found: %s", file_path)
+        raise
+    except pd.errors.ParserError as e:
+        logger.error("Failed to parse the csv file: %s", e)
+        raise
+    except Exception as e:
+        raise DetailedException(exc=e, logger=logger) from e
+
     
 def save_dask_dataframe_as_csv(file_save_path: str, dataframe: ddf.DataFrame, single_file: bool = False,index: bool = False, logger: Optional[logging.Logger] = None) -> None:
     """
@@ -201,13 +240,66 @@ def save_dask_dataframe_as_csv(file_save_path: str, dataframe: ddf.DataFrame, si
 
         # Write DataFrame to CSV
         logger.debug("Writing DataFrame to CSV at: %s", file_save_path)
-        dataframe.to_csv(file_save_path, index=index, single_file=single_file)
+        with ProgressBar():
+            dataframe.to_csv(file_save_path, index=index, single_file=single_file)
         logger.info("DataFrame successfully saved to CSV: %s", file_save_path)
         logger.debug("Exiting 'save_dask_dataframe_as_csv' function of 'main_utils' module.")
     except Exception as e:
         # Any failure gets wrapped for consistent, detailed logging
         raise DetailedException(exc=e, logger=logger) from e
 
+def save_dask_dataframe_as_parquet(
+    file_save_path: str,
+    dataframe: ddf.DataFrame,
+    single_file: bool = False,
+    index: bool = False,
+    logger: Optional[logging.Logger] = None
+) -> None:
+    """
+    Persist a Dask DataFrame to disk as Parquet, optionally combining all partitions into one file.
+
+    By default, Dask writes one Parquet file per partition under the given path.
+    If `single_file=True`, the DataFrame is first collapsed to a single partition
+    before writing, resulting in one output Parquet file.
+
+    :param file_save_path:
+        Destination path or directory for Parquet output. Examples:
+        - "out/data-*.parquet": writes data-0.parquet, data-1.parquet, etc.
+        - "out/data.parquet": with single_file=True, writes one file under that path.
+    :param dataframe: The Dask DataFrame to save.
+    :param single_file: If True, repartition to one partition and write a single file.
+                        If False, writes one file per partition. Defaults to False.
+    :param index: Whether to include the DataFrame index in the output. Defaults to False.
+    :param logger: Optional Logger; if None, uses DEFAULT_LOGGER.
+    :raises DetailedException: If directory creation or the Parquet write fails.
+    """
+    try:
+        logger = logger or DEFAULT_LOGGER
+        logger.info("Entered save_dask_dataframe_as_parquet; target: %s", file_save_path)
+
+        # Ensure parent directory exists
+        parent_dir = os.path.dirname(file_save_path) or "."
+        logger.debug("Ensuring output directory exists: %s", parent_dir)
+        os.makedirs(parent_dir, exist_ok=True)
+        logger.info("Output directory ready: %s", parent_dir)
+
+        # If requested, collapse to a single partition
+        if single_file:
+            logger.debug("Repartitioning to one partition for single-file output")
+            dataframe = dataframe.repartition(npartitions=1)
+
+        logger.debug("Writing DataFrame to Parquet at: %s", file_save_path)
+        with ProgressBar():
+            dataframe.to_parquet(
+                file_save_path,
+                write_index=index
+            )
+        logger.info("DataFrame successfully saved to Parquet: %s", file_save_path)
+
+    except Exception as e:
+        # Wrap in your DetailedException for consistency
+        raise DetailedException(exc=e, logger=logger) from e
+    
 def save_object(
     file_path: str,
     obj: object,
@@ -317,7 +409,7 @@ def load_json(
         with open(file_path, "r") as file:
             loaded_dict = json.load(file)
             log.info("Json Successfully Loaded from: %s", file_path)
-    
+            return loaded_dict
     except Exception as e:
         raise DetailedException(exc=e, logger=log) from e
 
