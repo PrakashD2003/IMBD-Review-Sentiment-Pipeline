@@ -1,4 +1,6 @@
 import os
+from dataclasses import dataclass, field
+
 
 # Read the SINGLE_FILE variable and interpret common truthy values
 _sflag = os.getenv("SINGLE_FILE", "").strip().lower()
@@ -46,8 +48,10 @@ TRAINED_MODEL_OBJ_NAME:str = "model.pkl"
 METRICS_DIR_PATH:str = "reports"
 PERFORMANCE_METRICS_FILE_NAME:str = "performance_metrics.json" 
 EXPERIMENT_INFO_FILE_NAME:str = "experiment_info.json"
-MLFLOW_REGISTRY_MODEL_NAME:str = "model"
-MLFLOW_REGISTRY_VECTORIZER_NAME:str = "vectorizer"
+
+### Model Registry ###
+MODEL_ARTIFACT_PATH      = "model"
+VECTORIZER_ARTIFACT_PATH = "vectorizer"
 
 
 ################################################# CSV Variables ####################################################
@@ -129,3 +133,6 @@ MODEL_STAGE:str = os.getenv("MODEL_STAGE") or "Staging"
 
 ### Trainig Pipeline Variables ###
 DASK_SCHEDULER_ADDRESS = os.getenv("DASK_SCHEDULER_ADDRESS")
+
+### Prediction Pipeline Variables ###
+STAGES:list[str] = field(default_factory=lambda: ["Staging"])

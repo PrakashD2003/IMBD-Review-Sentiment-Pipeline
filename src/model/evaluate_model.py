@@ -82,7 +82,7 @@ class ModelEvaluation:
             X_test = test_ddf.drop(columns=[target_col]).to_dask_array(lengths=True)
             y_test = test_ddf[target_col].astype(int).to_dask_array(lengths=True)
 
-            # Pull into memory as pandas once
+            # Pull into memory as Numpy Array once
             X_test_in_mem = X_test.compute()
             y_test_in_mem = y_test.compute()
 
@@ -156,6 +156,7 @@ class ModelEvaluation:
 if __name__ == "__main__":
     model_evalutation = ModelEvaluation()
     model_evalutation.initiate_model_evaluation()
+    
             
 
 

@@ -72,7 +72,7 @@ class ModelRegistry:
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
         
-    def register_model(self, run_id:str, model_name:str, stage:str):
+    def register_model(self, run_id:str, artifact_path: str, model_name:str, stage:str):
         """
         Register a logged MLflow model under a given name and transition it to a stage.
 
@@ -89,7 +89,7 @@ class ModelRegistry:
         """
     
         try:
-            result = mlflow.register_model(model_uri=f"runs:/{run_id}/model_{run_id}", name=model_name)
+            result = mlflow.register_model(model_uri=f"runs:/{run_id}/{artifact_path}", name=model_name)
 
             mlflow.tracking.MlflowClient().transition_model_version_stage(name=model_name,
                                                                           version=result.version,
@@ -133,7 +133,8 @@ class ModelRegistry:
                 logger.info("Model Successfully Loaded.")
 
                 logger.debug("Logging Model in Mlflow experiment: %s",run.info.run_id )
-                mlflow.sklearn.log_model(model, f"model_{run.info.run_id}")
+                logger.info("Classifier expects %d features", model.coef_.shape[1])
+                mlflow.sklearn.log_model(model, artifact_path=self.model_registry_config.mlflow_model_artifact_path)
                 logger.debug("Successfully Logged Model in Mlflow experiment.")
                 model_params = self.params.get("Model_Params", {})
                 if model_params is None:
@@ -144,6 +145,7 @@ class ModelRegistry:
 
                 logger.debug("Registering Model in Mlflow Registry...")
                 self.register_model(run_id=run.info.run_id, 
+                                    artifact_path=self.model_registry_config.mlflow_model_artifact_path,
                                     model_name=self.model_registry_config.mlflow_model_name, 
                                     stage=self.model_registry_config.mlflow_model_stage)
                 logger.debug("Successfully Registered Model in Mlflow Registry.")
@@ -154,7 +156,8 @@ class ModelRegistry:
                 logger.info("Vectorizer Successfully Loaded.")
                 
                 logger.debug("Logging Vectorizer in Mlflow experiment: %s",run.info.run_id )
-                mlflow.sklearn.log_model(vectorizer, f"vectorizer_{run.info.run_id}")
+                logger.info("Vectorizer vocab size: %d", len(vectorizer.vocabulary_))
+                mlflow.sklearn.log_model(vectorizer, artifact_path=self.model_registry_config.mlflow_vectorizer_artifact_path)
                 logger.debug("Successfully Logged Vectorizer in Mlflow experiment.")
                 
                 vectorizer_params = self.params.get("TF-IDF_Params", {})
@@ -166,6 +169,7 @@ class ModelRegistry:
 
                 logger.debug("Registering Vectorizer in Mlflow Registry...")
                 self.register_model(run_id=run.info.run_id, 
+                                    artifact_path= self.model_registry_config.mlflow_vectorizer_artifact_path,
                                     model_name=self.model_registry_config.mlflow_vectorizer_name, 
                                     stage=self.model_registry_config.mlflow_model_stage)
                 logger.debug("Successfully Registered Vectorizer in Mlflow Registry.")

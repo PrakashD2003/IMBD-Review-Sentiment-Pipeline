@@ -25,7 +25,11 @@ Target_Col: "sentiment"
 Model_Params:
   C: 0.1                     # Inverse of regularization strength
   penalty: "l2"              # Regularization norm
-  solver: "lbfgs"             # Solver that supports elasticnet or l2
+  solver: "saga"             # Solver that supports elasticnet or l2
   max_iter: 300             # Maximum iterations for convergence
   tol: 0.001
   random_state: 42           # Seed for reproducibility
+
+### Prindiction Pipeline ###
+prediction_pipeline_params:
+   text_column_for_preprocessing: "review"

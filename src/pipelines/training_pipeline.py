@@ -1,25 +1,16 @@
 import argparse
 from dask.distributed import Client, LocalCluster
-from pathlib import Path
 
 from src.constants import DASK_SCHEDULER_ADDRESS
-from src.logger import configure_logger
 
-module_name = Path(__file__).stem
-logger = configure_logger(
-    logger_name=module_name,
-    level="DEBUG",
-    to_console=True,
-    to_file=True,
-    log_file_name=module_name,
-)
+
+
 
 def start_client():
+    """Bring up a Dask client (EKS scheduler or local)."""
     if DASK_SCHEDULER_ADDRESS:
-        logger.info("Connecting to remote Dask scheduler at %s", DASK_SCHEDULER_ADDRESS)
         return Client(DASK_SCHEDULER_ADDRESS)
     else:
-        logger.info("Starting local Dask cluster")
         cluster = LocalCluster(n_workers=4, threads_per_worker=1)
         return Client(cluster)
 
@@ -34,7 +25,7 @@ def main():
     args = parser.parse_args()
 
     client = start_client()
-    logger.info("Dask client dashboard: %s", client.dashboard_link)
+    print("Dask client dashboard: %s", client.dashboard_link)
 
     if args.step == "ingestion":
         from src.data.data_ingestion import DataIngestion
