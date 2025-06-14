@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 # Read the SINGLE_FILE variable and interpret common truthy values
 _sflag = os.getenv("SINGLE_FILE", "").strip().lower()
-SINGLE_FILE: bool = False #_sflag in ("1", "true", "yes")
+SINGLE_FILE: bool = _sflag in ("1", "true", "yes")
 
 
 ### Params(yaml file) Constants ###

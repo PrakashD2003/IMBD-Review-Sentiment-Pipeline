@@ -10,7 +10,7 @@ from src.entity.artifact_entity import DataIngestionArtifact
 from src.connections.s3_connection import S3Connection
 from src.utils.main_utils import load_params, save_dask_dataframe_as_parquet
 from src.constants import PARAM_FILE_PATH, SINGLE_FILE
-print(SINGLE_FILE)
+
 
 module_name = Path(__file__).stem
 
@@ -183,4 +183,4 @@ class DataIngestion:
 if __name__ == "__main__":
     data_ingestion = DataIngestion()
     data_ingestion.initiate_data_ingestion()
-    # 1
+    

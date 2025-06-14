@@ -160,5 +160,4 @@ class S3Connection:
             raise DetailedException(exc=e, logger=self.logger)
 
 
-        
-        
+

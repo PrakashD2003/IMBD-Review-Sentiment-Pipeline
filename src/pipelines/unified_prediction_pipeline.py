@@ -95,10 +95,16 @@ class UnifiedPredictionPipeline:
             logger.info("Entered 'configure_mlflow' function of 'PredictionPipeline' class.")
             logger.debug("Setting up MLFlOW and Dagshub...")
             mlflow.set_tracking_uri(uri=self.config.mlflow_uri)
-            dagshub.init(repo_owner=self.config.dagshub_repo_owner_name,
-                         repo_name=self.config.dagshub_repo_name,
-                         mlflow=True)
-            logger.info("MLFlOW and Dagshub Congigured Successfully.")
+            try:
+                dagshub.init(
+                    repo_owner=self.config.dagshub_repo_owner_name,
+                    repo_name=self.config.dagshub_repo_name,
+                    mlflow=True,
+                )
+                logger.info("MLflow and DagsHub configured successfully.")
+            except Exception as e:
+                logger.warning("DagsHub initialization failed: %s", e)
+                logger.info("Proceeding without DagsHub tracking")
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
         

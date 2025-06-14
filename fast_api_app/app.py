@@ -2,6 +2,7 @@ import os
 import logging
 import uvicorn
 import multiprocessing
+import pandas as pd         
 from pathlib import Path
 from typing import List
 
@@ -52,14 +53,13 @@ REQUEST_LATENCY = None
 INFERENCE_TIME = None
 
 @app.on_event("startup")
-def register_metrics():
+def startup_event():
     # Only run this in the main UVicorn process,
     # not in each Dask worker that imports the module.
     if multiprocessing.current_process().name != "MainProcess":
         return
     global REQUEST_COUNT, REQUEST_LATENCY, INFERENCE_TIME, pipeline, client
     client = start_client()
-    from prometheus_client import Counter, Histogram
     # Create your “unified” pipeline only once.
     pipeline = UnifiedPredictionPipeline()
 # ─── Prometheus metrics ─────────────────────────────────────────────────────────
@@ -103,9 +103,10 @@ async def predict(req: PredictRequest):
     This handler preprocesses client-supplied text, vectorizes it,
     runs the model, and returns integer labels.
     """
+    if pipeline is None:
+        raise HTTPException(status_code=503, detail="Pipeline unavailable")
     try:
         with INFERENCE_TIME.labels(mode="single").time():
-            import pandas as pd
             df = pd.DataFrame({"review": req.reviews})
             result_df = pipeline.predict_single(df)
             preds = result_df["prediction"].tolist()
@@ -123,6 +124,8 @@ async def batch_predict(req: PredictRequest):
     Splits input into partitions and runs them in parallel,
     then gathers and returns all predictions.
     """
+    if pipeline is None:
+        raise HTTPException(status_code=503, detail="Pipeline unavailable")
     try:
         with INFERENCE_TIME.labels(mode="batch").time():
             import pandas as pd
