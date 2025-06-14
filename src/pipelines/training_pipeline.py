@@ -11,7 +11,7 @@ def start_client():
     if DASK_SCHEDULER_ADDRESS:
         return Client(DASK_SCHEDULER_ADDRESS)
     else:
-        cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+        cluster = LocalCluster(n_workers=1, threads_per_worker=2, memory_limit="12GB")
         return Client(cluster)
 
 def main():
