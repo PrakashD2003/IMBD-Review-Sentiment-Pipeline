@@ -111,8 +111,10 @@ class FeatureEngineering:
 
             # Prepare meta with float64 TF-IDF columns
             feature_names = tfidf.get_feature_names_out()
-            meta = pd.DataFrame({f: pd.Series(dtype="float64") for f in feature_names})
-            meta["sentiment"] = pd.Series(dtype="int64")
+            feature_names = [f"tfidf_{f}" for f in tfidf.get_feature_names_out()]
+            meta_cols = {f: "float64" for f in feature_names}
+            meta_cols["sentiment"] = "int64"
+            meta = ddf.utils.make_meta(meta_cols)
 
           
 
@@ -211,4 +213,4 @@ class FeatureEngineering:
 if __name__ == "__main__":
     feature_engineering = FeatureEngineering()
     feature_engineering.initiate_feature_engineering()
-    # 1
+    # 2

@@ -357,7 +357,7 @@ def load_object(file_path: str, logger: Optional[logging.Logger] = None) -> obje
 
 def save_json(
     file_path: str,
-    dict: dict,
+    data: dict,
     logger: Optional[logging.Logger] = None
 ) -> None:
     """

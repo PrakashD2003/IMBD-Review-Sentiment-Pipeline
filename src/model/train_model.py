@@ -62,10 +62,11 @@ class ModelTrainer:
         try:
             logger.info("Entered 'train_model' function of 'ModelTrainer' class.")
             logger.debug("Splitting training data into 'dependent' and 'independent' features...")
+            
             train_ddf = train_ddf.persist()     # materialize all partitions & fix divisions
             y_train = train_ddf[target_col].to_dask_array(lengths=True)
             x_train = train_ddf.drop(columns=[target_col]).to_dask_array(lengths=True)
-
+            
             model_params = self.params.get("Model_Params", {})
             logger.debug("Initializing 'LogisticRegression' with Params: %s", model_params)
             clf = LogisticRegression(**model_params)
@@ -99,6 +100,7 @@ class ModelTrainer:
             train_ddf = load_parquet_as_dask_dataframe(file_path=self.feature_engineering_artifact.feature_engineered_training_data_file_path,
                                             logger=logger)
             
+            logger.info("Training Data Shape (before split): %s", train_ddf.shape)
             clf = self.train_model(train_ddf=train_ddf, target_col=self.params.get("Target_Col"))
 
             logger.debug("Saving Trained Model Object at: %s", self.model_trainer_config.trained_model_obj_path)
@@ -116,4 +118,4 @@ if __name__ == "__main__":
     model_trainer.initiate_model_training()
 
 
-            
+

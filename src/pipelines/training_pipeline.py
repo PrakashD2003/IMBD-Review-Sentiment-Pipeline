@@ -1,7 +1,7 @@
 import argparse
 from dask.distributed import Client, LocalCluster
 
-from src.constants import DASK_SCHEDULER_ADDRESS
+from src.constants import DASK_SCHEDULER_ADDRESS, DASK_WORKERS, DASK_THREADS, DASK_MEMORY_LIMIT
 
 
 
@@ -11,8 +11,12 @@ def start_client():
     if DASK_SCHEDULER_ADDRESS:
         return Client(DASK_SCHEDULER_ADDRESS)
     else:
-        cluster = LocalCluster(n_workers=1, threads_per_worker=2, memory_limit="12GB")
-        return Client(cluster)
+         cluster = LocalCluster(
+            n_workers=DASK_WORKERS,
+            threads_per_worker=DASK_THREADS,
+            memory_limit=DASK_MEMORY_LIMIT,
+        )
+    return Client(cluster)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -27,29 +31,33 @@ def main():
     client = start_client()
     print("Dask client dashboard: %s", client.dashboard_link)
 
-    if args.step == "ingestion":
-        from src.data.data_ingestion import DataIngestion
-        DataIngestion().initiate_data_ingestion()
 
-    elif args.step == "preprocess":
-        from src.data.data_preprocessing import DataPreprocessing
-        DataPreprocessing().initiate_data_preprocessing()
+    try:
+        if args.step == "ingestion":
+            from src.data.data_ingestion import DataIngestion
+            DataIngestion().initiate_data_ingestion()
 
-    elif args.step == "fe":
-        from src.features.feature_engineering import FeatureEngineering
-        FeatureEngineering().initiate_feature_engineering()
+        elif args.step == "preprocess":
+            from src.data.data_preprocessing import DataPreprocessing
+            DataPreprocessing().initiate_data_preprocessing()
 
-    elif args.step == "train":
-        from src.model.train_model import ModelTrainer
-        ModelTrainer().initiate_model_training()
+        elif args.step == "fe":
+            from src.features.feature_engineering import FeatureEngineering
+            FeatureEngineering().initiate_feature_engineering()
 
-    elif args.step == "evaluate":
-        from src.model.evaluate_model import ModelEvaluation
-        ModelEvaluation().initiate_model_evaluation()
+        elif args.step == "train":
+            from src.model.train_model import ModelTrainer
+            ModelTrainer().initiate_model_training()
 
-    elif args.step == "register":
-        from src.model.register_model import ModelRegistry
-        ModelRegistry().initiate_model_registration()
+        elif args.step == "evaluate":
+            from src.model.evaluate_model import ModelEvaluation
+            ModelEvaluation().initiate_model_evaluation()
+
+        elif args.step == "register":
+            from src.model.register_model import ModelRegistry
+            ModelRegistry().initiate_model_registration()
+    finally:
+        client.close()
 
 if __name__ == "__main__":
     main()

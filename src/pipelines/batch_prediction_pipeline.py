@@ -68,7 +68,7 @@ class BatchPredictionPipeline:
             self.preprocessor = preprocessor
             self.params = load_params(params_path=PARAM_FILE_PATH, logger=logger)
 
-            # Start Dask client
+             # Start Dask client (closed when run methods complete)
             self.client = start_client()
 
             # Configure MLflow
@@ -130,6 +130,8 @@ class BatchPredictionPipeline:
             logger.info("Batch predictions saved.")
         except Exception as e:
             raise DetailedException(exc=e, logger=logger)
+        finally:
+            self.client.close()
     
     def run_on_api(self, df:pd.DataFrame) -> None:
         """
@@ -152,6 +154,8 @@ class BatchPredictionPipeline:
             return result.compute()
         except Exception as e:
             raise DetailedException(exc=e, logger=logger)
+        finally:
+            self.client.close()
 
 if __name__ == "__main__":
     batch = BatchPredictionPipeline()

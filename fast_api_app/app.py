@@ -45,9 +45,8 @@ def start_client() -> Client:
 # ─── FastAPI setup ─────────────────────────────────────────────────────────────
 app = FastAPI(title="IMDB Sentiment Prediction API")
 
-pipeline:UnifiedPredictionPipeline
-client = None
-pipeline = None
+pipeline: UnifiedPredictionPipeline
+client: Client | None = None
 REQUEST_COUNT = None
 REQUEST_LATENCY = None
 INFERENCE_TIME = None
@@ -58,7 +57,8 @@ def register_metrics():
     # not in each Dask worker that imports the module.
     if multiprocessing.current_process().name != "MainProcess":
         return
-    global REQUEST_COUNT, REQUEST_LATENCY, INFERENCE_TIME, pipeline
+    global REQUEST_COUNT, REQUEST_LATENCY, INFERENCE_TIME, pipeline, client
+    client = start_client()
     from prometheus_client import Counter, Histogram
     # Create your “unified” pipeline only once.
     pipeline = UnifiedPredictionPipeline()
@@ -67,7 +67,11 @@ def register_metrics():
     REQUEST_LATENCY  = Histogram("app_request_latency_seconds", "Request latency", ["endpoint","method"])
     INFERENCE_TIME   = Histogram("inference_time_seconds", "Time spent in model inference", ["mode"])
 
-
+# Close the Dask client gracefully when the server stops
+@app.on_event("shutdown")
+def shutdown_event():
+    if client:
+        client.close()
 
 # ─── Request / response schemas ────────────────────────────────────────────────
 class PredictRequest(BaseModel):

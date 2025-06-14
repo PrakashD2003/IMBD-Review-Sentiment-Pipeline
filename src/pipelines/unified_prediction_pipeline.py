@@ -2,7 +2,7 @@ import dagshub
 import mlflow
 import pandas as pd
 import dask.dataframe as dd
-from dask.distributed import Client, LocalCluster
+from dask.distributed import Client, LocalCluster, get_client
 from pathlib import Path
 from functools import partial
 
@@ -21,6 +21,16 @@ logger = configure_logger(
     to_file=True,
     log_file_name=module_name,
 )
+
+def start_client() -> Client:
+    """Start or connect to a Dask scheduler for batch inference."""
+    if DASK_SCHEDULER_ADDRESS:
+        logger.info("Connecting to remote Dask scheduler at %s", DASK_SCHEDULER_ADDRESS)
+        return Client(DASK_SCHEDULER_ADDRESS)
+    else:
+        logger.info("Starting local Dask cluster for prediction")
+        cluster = LocalCluster(n_workers=8, threads_per_worker=2, memory_limit="4GB")
+        return Client(cluster)
 
 
 
@@ -49,7 +59,11 @@ class UnifiedPredictionPipeline:
         """
         try:
             logger.debug("Configuring 'UnifiedPredictionPipeline' class of 'prediction_pipeline' module through constructer...")
-
+             # Ensure a Dask client is available
+            try:
+                get_client()
+            except ValueError:
+                start_client()
             self.config = PredictionPipelineConfig()
             self.params = load_params(params_path=PARAM_FILE_PATH, logger=logger)
             self.preprocessor = DataPreprocessing()
@@ -197,4 +211,7 @@ class UnifiedPredictionPipeline:
             return result.compute()
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
+        
+
+
         

@@ -133,6 +133,10 @@ MODEL_STAGE:str = os.getenv("MODEL_STAGE") or "Staging"
 
 ### Trainig Pipeline Variables ###
 DASK_SCHEDULER_ADDRESS = os.getenv("DASK_SCHEDULER_ADDRESS")
+# Environment configuration for local Dask clusters
+DASK_WORKERS = int(os.getenv("DASK_WORKERS", "1"))
+DASK_THREADS = int(os.getenv("DASK_THREADS", "2"))
+DASK_MEMORY_LIMIT = os.getenv("DASK_MEMORY_LIMIT", "12GB")
 
 ### Prediction Pipeline Variables ###
 STAGES:list[str] = field(default_factory=lambda: ["Staging"])

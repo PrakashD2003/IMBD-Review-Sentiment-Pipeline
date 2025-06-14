@@ -180,4 +180,4 @@ class ModelRegistry:
 if __name__ == "__main__":
     model_registry = ModelRegistry()
     model_registry.initiate_model_registration()
-    
+    #1

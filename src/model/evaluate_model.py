@@ -144,7 +144,7 @@ class ModelEvaluation:
 
             logger.debug("Saving Performance Metrics at: %s", self.model_evaluation_config.performance_metrics_file_save_path)
             save_json(file_path=self.model_evaluation_config.performance_metrics_file_save_path, 
-                      dict=performance_metrics, 
+                      data=performance_metrics, 
                       logger=logger)
             logger.info("Performance Metircs Successfully Saved.")
 
@@ -158,6 +158,6 @@ if __name__ == "__main__":
     model_evalutation.initiate_model_evaluation()
     
             
-
+#1
 
 

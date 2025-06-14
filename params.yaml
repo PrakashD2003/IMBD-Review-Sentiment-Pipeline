@@ -30,6 +30,6 @@ Model_Params:
   tol: 0.001
   random_state: 42           # Seed for reproducibility
 
-### Prindiction Pipeline ###
+### Pridiction Pipeline ###
 prediction_pipeline_params:
    text_column_for_preprocessing: "review"
