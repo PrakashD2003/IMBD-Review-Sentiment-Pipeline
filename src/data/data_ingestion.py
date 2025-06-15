@@ -53,7 +53,7 @@ class DataIngestion:
     ) -> dd.DataFrame:
         """
         Filter to only rows where 'sentiment' is 'positive' or 'negative',
-        then encode 'positive'→1 and 'negative'→0 in place (lazily).
+        then encode 'positive'->1 and 'negative'->0 in place (lazily).
 
         :param ddf_raw: Raw Dask DataFrame containing at least a 'sentiment' column.
         :return: A Dask DataFrame containing only positive/negative rows with sentiment encoded.
@@ -66,7 +66,7 @@ class DataIngestion:
             ddf_filtered = ddf_raw[ddf_raw["sentiment"].isin(["positive", "negative"])]
             logger.info("Filtered positive/negative rows; now encoding.")
 
-            # 2) Encode: positive→1, negative→0
+            # 2) Encode: positive->1, negative->0
             #    NOTE: Dask cares if you assign to a new column or use .map.
             ddf_filtered = ddf_filtered.assign(
                 sentiment=ddf_filtered["sentiment"]
@@ -75,7 +75,7 @@ class DataIngestion:
                     meta=("sentiment", "int64")
                 )
             )
-            logger.info("Encoding complete (positive→1, negative→0).")
+            logger.info("Encoding complete (positive->1, negative->0).")
 
             return ddf_filtered
 

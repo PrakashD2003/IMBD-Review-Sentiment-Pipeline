@@ -13,8 +13,8 @@ stages:
       size: 1019
     - path: src/data/data_ingestion.py
       hash: md5
-      md5: 1334c8e259d0e5f5b353caacba6efe5c
-      size: 8013
+      md5: bfddb2f1b628919f3a2efb22718ecd86
+      size: 8019
     params:
       params.yaml:
         data_ingestion_params.random_state: 42
@@ -59,8 +59,8 @@ stages:
       size: 1019
     - path: src/data/data_preprocessing.py
       hash: md5
-      md5: f103c4caa306a9538b284b06ffce497e
-      size: 8274
+      md5: e9c62116469f063774d9855e038f18a9
+      size: 8286
     params:
       params.yaml:
         data_preprocessing_params.text_column_for_preprocessing: review
@@ -98,8 +98,8 @@ stages:
       size: 1019
     - path: src/features/feature_engineering.py
       hash: md5
-      md5: 84e75f1b235289be588ed1fce26506c6
-      size: 11225
+      md5: f6540cad5d2e6a98a09600cf4dd9f5b1
+      size: 11237
     params:
       params.yaml:
         TF-IDF_Params.max_df: 0.9
@@ -143,8 +143,8 @@ stages:
       size: 1019
     - path: src/model/train_model.py
       hash: md5
-      md5: 9df17bea60758605e437760a94f47f7c
-      size: 6010
+      md5: 9853d93b74b493a99c29be4f372d7baf
+      size: 6022
     params:
       params.yaml:
         Model_Params.C: 0.1
@@ -178,8 +178,8 @@ stages:
       size: 1019
     - path: src/model/evaluate_model.py
       hash: md5
-      md5: 10af0f631502c5ae7738af4f34cb184c
-      size: 8178
+      md5: 59755aad6d079dd5e48d72721e16e79c
+      size: 8190
     params:
       params.yaml:
         Target_Col: sentiment

@@ -10,7 +10,7 @@ from typing import List
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-from starlette.responses import Response
+from starlette.responses import Response, StreamingResponse
 from dask.distributed import Client, LocalCluster
 
 from src.pipelines.unified_prediction_pipeline import UnifiedPredictionPipeline
@@ -168,6 +168,27 @@ async def trigger_training():
         logger.error("dvc executable not found")
         raise HTTPException(status_code=500, detail="dvc is not installed")
 
+@app.get("/train_stream")
+async def stream_training_logs():
+    """Stream real-time logs from `dvc repro` as Server-Sent Events."""
+    repo_root = Path(__file__).resolve().parents[1]
+
+    def event_stream():
+        process = subprocess.Popen(
+            ["dvc", "repro", "-f"],
+            cwd=repo_root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        for line in iter(process.stdout.readline, ""):
+            yield f"data: {line.rstrip()}\n\n"
+        process.wait()
+        yield "event: end\ndata: done\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
 
 @app.post("/dvc_push")
 async def trigger_dvc_push():
@@ -187,6 +208,26 @@ async def trigger_dvc_push():
     except FileNotFoundError:
         logger.error("dvc executable not found")
         raise HTTPException(status_code=500, detail="dvc is not installed")
+    
+@app.get("/dvc_status")
+async def dvc_status():
+    """Return the output of `dvc status`."""
+    repo_root = Path(__file__).resolve().parents[1]
+    try:
+        result = subprocess.run(
+            ["dvc", "status"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            logger.error("DVC status failed: %s", result.stderr)
+            raise HTTPException(status_code=500, detail=result.stderr)
+        return {"detail": result.stdout or "Workspace clean"}
+    except FileNotFoundError:
+        logger.error("dvc executable not found")
+        raise HTTPException(status_code=500, detail="dvc is not installed")
+
 
 if __name__ == "__main__":
     uvicorn.run(

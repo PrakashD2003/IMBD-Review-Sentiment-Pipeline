@@ -176,7 +176,7 @@ class UnifiedPredictionPipeline:
         Run distributed batch inference on a pandas DataFrame using Dask.
 
         This method will spin up (or reuse) a Dask Client, split `df` into
-        `N_PARTITIONS` partitions, and map a preprocessing→vectorize→predict
+        `N_PARTITIONS` partitions, and map a preprocessing->vectorize->predict
         function across them in parallel. The final result is gathered back
         into a pandas DataFrame.
 
