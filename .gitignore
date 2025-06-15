@@ -1,6 +1,9 @@
 saved_models
 reports
 
+!fast_api_app/frontend/build/
+fast_api_app/frontend/node_modules/
+
 # Local Terraform CLI files
 .terraform/
 .terraform.lock.hcl

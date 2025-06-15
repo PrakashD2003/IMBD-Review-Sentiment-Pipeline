@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -49,6 +50,14 @@ def start_client() -> Client:
 # ─── FastAPI setup ─────────────────────────────────────────────────────────────
 app = FastAPI(title="IMDB Sentiment Prediction API")
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+
+# Serve the bundled React frontend if it exists
+frontend_build = Path(__file__).parent / "frontend" / "build"
+if frontend_build.exists():
+    app.mount("/frontend", StaticFiles(directory=frontend_build, html=True), name="frontend")
+    static_dir = frontend_build / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 pipeline: UnifiedPredictionPipeline
 client: Client | None = None
