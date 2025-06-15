@@ -193,12 +193,12 @@ stages:
     deps:
     - path: ./src/pipelines/training_pipeline.py
       hash: md5
-      md5: 1187f6fce5c43ceb7cf7b38895d58153
-      size: 1769
+      md5: fbddfc9e813f083723bdda14d45b8c53
+      size: 2019
     - path: params.yaml
       hash: md5
-      md5: 20d1c36c0cbfcb547591edb9ab6dc81b
-      size: 1020
+      md5: ba6c570b2ea99218310f8e177b70a54d
+      size: 1019
     - path: reports/performance_metrics.json
       hash: md5
       md5: faf4e1d2932efb4ba59b29f798c9d229
@@ -210,10 +210,10 @@ stages:
       nfiles: 1
     - path: saved_models/vectorizer
       hash: md5
-      md5: 761421b91cfe6b8be5b184777a43fd03.dir
+      md5: fbabaf84f3cdd24e143e89e6ced684bb.dir
       size: 183126
       nfiles: 1
     - path: src/model/register_model.py
       hash: md5
-      md5: 8d8355770d5ef0a7c2ae178c3413b2ea
-      size: 10433
+      md5: 10cff33dd80f606f12748324f301a138
+      size: 9865
