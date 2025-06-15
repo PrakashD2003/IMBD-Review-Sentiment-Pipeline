@@ -93,8 +93,8 @@ class ModelTrainer:
         """
         try:
             logger.info("Entered 'initiate_model_training' method of 'ModelTrainer' class")
-            print("\n" + "-" * 80)
-            print("Starting Model Trainer Component...")
+            logger.info("\n" + "-" * 80)
+            logger.info("Starting Model Trainer Component...")
 
             logger.debug("Loading training data from: %s", self.feature_engineering_artifact.feature_engineered_training_data_file_path)
             train_ddf = load_parquet_as_dask_dataframe(file_path=self.feature_engineering_artifact.feature_engineered_training_data_file_path,

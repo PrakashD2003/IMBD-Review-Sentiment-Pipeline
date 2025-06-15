@@ -94,8 +94,8 @@ class DataIngestion:
         """
         try:
             logger.info("Entered 'initiate_data_ingestion' function of 'DataIngetion' Class")
-            print("\n" + "-" * 80)
-            print("Starting Data Ingestion Component...")
+            logger.info("\n" + "-" * 80)
+            logger.info("Starting Data Ingestion Component...")
             # 1) Fetch raw CSV from S3 into a Dask DataFrame
             logger.debug(
                 "Fetching raw CSV from S3: bucket='%s', key='%s'",

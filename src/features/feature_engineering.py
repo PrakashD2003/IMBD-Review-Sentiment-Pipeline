@@ -158,8 +158,8 @@ class FeatureEngineering:
         """
         try:
             logger.info("Entered 'initiate_feature_engineering' method of 'FeatureEngineering' class")
-            print("\n" + "-" * 80)
-            print("Starting Feature Engineering Component...")
+            logger.info("\n" + "-" * 80)
+            logger.info("Starting Feature Engineering Component...")
 
             logger.debug("Loading Training data from: %s",self.data_preprocessing_artifact.preprocessed_training_data_file_path)
             train_ddf = load_parquet_as_dask_dataframe(file_path=self.data_preprocessing_artifact.preprocessed_training_data_file_path,

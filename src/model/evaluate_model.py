@@ -125,8 +125,8 @@ class ModelEvaluation:
         """
         try:
             logger.info("Entered 'initiate_model_evaluation' method of 'ModelEvaluation' class")
-            print("\n" + "-" * 80)
-            print("Starting Model Evaluation Component...")
+            logger.info("\n" + "-" * 80)
+            logger.info("Starting Model Evaluation Component...")
 
             logger.debug("Loading Test data from: %s",self.feature_engineering_artifact.feature_engineered_test_data_file_path)
             test_ddf = load_parquet_as_dask_dataframe(file_path=self.feature_engineering_artifact.feature_engineered_test_data_file_path,

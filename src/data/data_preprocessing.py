@@ -139,8 +139,8 @@ class DataPreprocessing:
             :raises DetailedException: If any step (load, preprocess, save) fails.
             """
             logger.info("Entered initiate_data_preprocessing method of 'DataPreprocessing' class")
-            print("\n" + "-" * 80)
-            print("Starting Data Preprocessing Component...")
+            logger.info("\n" + "-" * 80)
+            logger.info("Starting Data Preprocessing Component...")
 
             logger.debug("Loading Training Data...")
             training_data = load_parquet_as_dask_dataframe(self.data_ingestion_artifact.training_data_file_path, logger=logger)
