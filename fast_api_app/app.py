@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import List
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from starlette.responses import Response, StreamingResponse
@@ -46,6 +48,7 @@ def start_client() -> Client:
 
 # ─── FastAPI setup ─────────────────────────────────────────────────────────────
 app = FastAPI(title="IMDB Sentiment Prediction API")
+templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 pipeline: UnifiedPredictionPipeline
 client: Client | None = None
@@ -73,6 +76,15 @@ def startup_event():
 def shutdown_event():
     if client:
         client.close()
+
+
+# ─── Home page ───
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    """Render the application home page."""
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
 
 # ─── Request / response schemas ────────────────────────────────────────────────
 class PredictRequest(BaseModel):

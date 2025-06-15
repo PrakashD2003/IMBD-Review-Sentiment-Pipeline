@@ -140,3 +140,6 @@ DASK_MEMORY_LIMIT = os.getenv("DASK_MEMORY_LIMIT", "12GB")
 
 ### Prediction Pipeline Variables ###
 STAGES:list[str] = field(default_factory=lambda: ["Staging"])
+
+### Fast Api ###
+PORT:int

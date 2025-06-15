@@ -71,50 +71,66 @@ def get_latest_model(model_name: str, stages: Iterable[str], *, flavor: str = "p
     try:
         logger = logger or DEFAULT_LOGGER
         client = mlflow.MlflowClient()
-        logger.debug("Getting Latest Version of model: '%s' of stages: '%s' from Mlflow Registry...", model_name, stages)
+        logger.debug(
+            "Getting Latest Version of model: '%s' of stages: '%s' from Mlflow Registry...",
+            model_name,
+            stages,
+        )
         versions = client.get_latest_versions(model_name, stages=list(stages))
-        if not versions:
-            raise RuntimeError(f"No versions of '{model_name}' found for stages {list(stages)}")
+    except Exception as e:
+        raise DetailedException(exc=e, logger=logger) from e
+    
+    if not versions:
+        raise RuntimeError(f"No versions of '{model_name}' found for stages {list(stages)}")
 
-        model_uri = f"models:/{model_name}/{versions[0].version}"
-        loader = getattr(mlflow, flavor)
-        logger.info(f"Fetching model from: {model_uri}")
+
+    model_uri = f"models:/{model_name}/{versions[0].version}"
+    loader = getattr(mlflow, flavor)
+    logger.info(f"Fetching model from: {model_uri}")
+    try:
         return loader.load_model(model_uri)
     except Exception as e:
         raise DetailedException(exc=e, logger=logger) from e
 
-def get_latest_version(model_name:str, stages:list[str], logger: Optional[logging.Logger] = None)->object:
-    """
-    Return the version number of the latest model in the specified stages.
+def get_latest_version(
+    model_name: str,
+    stages: list[str],
+    logger: Optional[logging.Logger] = None,
+) -> mlflow.entities.model_registry.ModelVersion:
+    """Return the latest ``ModelVersion`` for ``model_name`` in ``stages``.
 
     Parameters
     ----------
     model_name : str
         Name of the registered model in the MLflow Model Registry.
-    stages : Iterable[str]
+    stages : list[str]
         List of stages to search, e.g. ["Staging", "Production"].
     logger : Optional[logging.Logger]
-        Logger to use for debug messages. Defaults to DEFAULT_LOGGER.
+        Logger to use for debug messages. Defaults to ``DEFAULT_LOGGER``..
 
     Returns
     -------
-    str
-        The version string of the latest model.
+    mlflow.entities.model_registry.ModelVersion
+        The most recent model version in the provided stages
 
     Raises
     ------
-    DetailedException
-        If there is an error contacting the MLflow Registry.
     RuntimeError
         If no versions are found in the given stages.
+    DetailedException
+        If there is an error contacting the MLflow Registry.
     """
     try:
         logger = logger or DEFAULT_LOGGER
         client = mlflow.MlflowClient()
-        logger.debug("Getting Latest Version of model: '%s' of stages: '%s' from Mlflow Registry...", model_name, stages)
-        latest_version = client.get_latest_versions(model_name, stages=stages)
-        if not latest_version:
+        logger.debug(
+            "Getting Latest Version of model: '%s' of stages: '%s' from Mlflow Registry...",
+            model_name,
+            stages,
+        )
+        versions = client.get_latest_versions(model_name, stages=stages)
+        if not versions:
             raise RuntimeError(f"No {stages} version of {model_name}")
-        return latest_version 
+        return versions[0] 
     except Exception as e:
         raise DetailedException(exc=e, logger=logger) from e
