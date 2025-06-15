@@ -6,6 +6,7 @@ from dask.distributed import Client, LocalCluster, get_client
 from pathlib import Path
 from functools import partial
 
+from src.utils.mlflow_utils import configure_mlflow, get_latest_model
 from src.entity.config_entity import PredictionPipelineConfig
 from src.logger import configure_logger
 from src.exception import DetailedException
@@ -69,16 +70,29 @@ class UnifiedPredictionPipeline:
             self.preprocessor = DataPreprocessing()
 
             # MLflow setup
-            self.configure_mlflow()
+            configure_mlflow(
+            mlflow_uri=self.config.mlflow_uri,
+            dagshub_repo_owner_name=self.config.dagshub_repo_owner_name,
+            dagshub_repo_name=self.config.dagshub_repo_name,
+            logger=logger,
+            )
 
             # Loading Models
             logger.info("Loading classifier model named %r", self.config.mlflow_model_name)
-            self.model = self.get_latest_model(model_name=self.config.mlflow_model_name,
-                                            stages=self.config.mlflow_model_stages)
+            self.model = get_latest_model(
+                model_name=self.config.mlflow_model_name,
+                stages=self.config.mlflow_model_stages,
+                flavor="sklearn",
+                logger=logger
+            )
             
             logger.info("Loading TF-IDF vectorizer named %r", self.config.mlflow_vectorizer_name)
-            self.vectorizer = self.get_latest_model(model_name=self.config.mlflow_vectorizer_name, 
-                                                    stages=self.config.mlflow_model_stages)
+            self.vectorizer = get_latest_model(
+                model_name=self.config.mlflow_vectorizer_name,
+                stages=self.config.mlflow_model_stages,
+                flavor="sklearn",
+                logger=logger
+            )
             logger.info("Vectorizer vocab size: %d", len(self.vectorizer.vocabulary_))
             logger.info("Classifier expects %d features", self.model.coef_.shape[1])
             
@@ -86,55 +100,6 @@ class UnifiedPredictionPipeline:
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
         
-    
-    def configure_mlflow(self)->None:
-        """
-        Configures MLflow and DagsHub for tracking.
-        """
-        try:
-            logger.info("Entered 'configure_mlflow' function of 'PredictionPipeline' class.")
-            logger.debug("Setting up MLFlOW and Dagshub...")
-            mlflow.set_tracking_uri(uri=self.config.mlflow_uri)
-            try:
-                dagshub.init(
-                    repo_owner=self.config.dagshub_repo_owner_name,
-                    repo_name=self.config.dagshub_repo_name,
-                    mlflow=True,
-                )
-                logger.info("MLflow and DagsHub configured successfully.")
-            except Exception as e:
-                logger.warning("DagsHub initialization failed: %s", e)
-                logger.info("Proceeding without DagsHub tracking")
-        except Exception as e:
-            raise DetailedException(exc=e, logger=logger) from e
-        
-    def get_latest_model(self, model_name:str, stages:list[str])->object:
-        """
-        Retrieve the latest registered model (or vectorizer) from MLflow Model Registry.
-
-        Parameters
-        ----------
-        model_name : str
-            The name under which the model was registered in MLflow.
-        stages : list[str]
-            List of stages to consider (e.g. ["Staging", "Production"]).
-
-        Returns
-        -------
-        object
-            A pyfunc-wrapped model or vectorizer.
-        """
-        try:
-            client = mlflow.MlflowClient()
-            logger.debug("Getting Latest Version of model: '%s' of stages: '%s' from Mlflow Registry...", model_name, stages)
-            latest_version = client.get_latest_versions(model_name, stages=stages)
-            if not latest_version:
-                raise RuntimeError(f"No {stages} version of {model_name}")
-            model_uri = f'models:/{model_name}/{latest_version[0].version}'
-            logger.info(f"Fetching model from: {model_uri}")
-            return mlflow.sklearn.load_model(model_uri=model_uri)   
-        except Exception as e:
-            raise DetailedException(exc=e, logger=logger) from e
 
     def predict_single(self, df: pd.DataFrame) -> pd.DataFrame:
         """

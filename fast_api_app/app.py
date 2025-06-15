@@ -181,6 +181,7 @@ async def stream_training_logs():
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            env={"PYTHONUNBUFFERED": "1", **os.environ},
         )
         for line in iter(process.stdout.readline, ""):
             yield f"data: {line.rstrip()}\n\n"

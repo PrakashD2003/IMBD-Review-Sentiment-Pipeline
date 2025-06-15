@@ -1,25 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export default function TrainPage() {
   const [message, setMessage] = useState('');
   const [logs, setLogs] = useState([]);
-  let eventSourceRef = null;
+  const eventSourceRef = useRef(null);
   
   const triggerTrain = () => {
     setMessage('Starting training...');
     setLogs([]);
     const es = new EventSource('/train_stream');
-    eventSourceRef = es;
+    eventSourceRef.current = es;
     es.onmessage = (e) => {
       setLogs((l) => [...l, e.data]);
     };
     es.addEventListener('end', () => {
       setMessage('Training completed');
-      es.close();
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
     });
     es.onerror = () => {
       setMessage('Error during training');
-      es.close();
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
     };
   };
 
@@ -64,4 +70,5 @@ export default function TrainPage() {
       </div>
     </div>
   );
-}
+
+  }

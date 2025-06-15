@@ -5,6 +5,7 @@ import pandas as pd
 from dask.distributed import Client, LocalCluster
 from pathlib import Path
 
+from src.utils.mlflow_utils import configure_mlflow,  get_latest_model
 from src.entity.config_entity import PredictionPipelineConfig
 from src.logger import configure_logger
 from src.exception import DetailedException
@@ -54,60 +55,25 @@ class PredictionPipeline:
             self.prediction_pipeline_congfig = prediction_pipeline_congfig
             self.data_preprocessing = data_preprocessing
             self.params = load_params(params_path=PARAM_FILE_PATH, logger=logger)
-            self.configure_mlflow()
-            self.vectorizer = self.get_latest_model(model_name=self.prediction_pipeline_congfig.mlflow_vectorizer_name, 
-                                                    stages=self.prediction_pipeline_congfig.mlflow_model_stages)
-            self.model = self.get_latest_model(model_name=self.prediction_pipeline_congfig.mlflow_model_name,
-                                          stages=self.prediction_pipeline_congfig.mlflow_model_stages)
+            configure_mlflow(
+                mlflow_uri=self.prediction_pipeline_congfig.mlflow_uri,
+                dagshub_repo_owner_name=self.prediction_pipeline_congfig.dagshub_repo_owner_name,
+                dagshub_repo_name=self.prediction_pipeline_congfig.dagshub_repo_name,
+                logger=logger,
+            )
+            self.vectorizer = get_latest_model(
+                model_name=self.prediction_pipeline_congfig.mlflow_vectorizer_name,
+                stages=self.prediction_pipeline_congfig.mlflow_model_stages,
+                logger=logger
+            )
+            self.model = get_latest_model(
+                model_name=self.prediction_pipeline_congfig.mlflow_model_name,
+                stages=self.prediction_pipeline_congfig.mlflow_model_stages,
+                logger=logger
+            )
             logger.info("PredictionPipeline class configured successfully.")
         except Exception as e:
             raise DetailedException(exc=e, logger=logger)
-    
-    def configure_mlflow(self)->None:
-        """
-        Configures MLflow and DagsHub for tracking.
-
-        Args:
-            experiment_name (str): The name of the MLflow experiment.
-        """
-        try:
-            logger.info("Entered 'configure_mlflow' function of 'PredictionPipeline' class.")
-            logger.debug("Setting up MLFlOW and Dagshub...")
-            mlflow.set_tracking_uri(uri=self.prediction_pipeline_congfig.mlflow_uri)
-            dagshub.init(repo_owner=self.prediction_pipeline_congfig.dagshub_repo_owner_name,
-                         repo_name=self.prediction_pipeline_congfig.dagshub_repo_name,
-                         mlflow=True)
-            logger.info("MLFlOW and Dagshub Congigured Successfully.")
-        except Exception as e:
-            raise DetailedException(exc=e, logger=logger) from e
-        
-    def get_latest_model(self, model_name:str, stages:list[str])->object:
-        """
-        Retrieve the latest registered model (or vectorizer) from MLflow Model Registry.
-
-        Parameters
-        ----------
-        model_name : str
-            The name under which the model was registered in MLflow.
-        stages : list[str]
-            List of stages to consider (e.g. ["Staging", "Production"]).
-
-        Returns
-        -------
-        object
-            A pyfunc-wrapped model or vectorizer.
-        """
-        try:
-            client = mlflow.MlflowClient()
-            logger.debug("Getting Latest Version of model: '%s' of stages: '%s' from Mlflow Registry...")
-            latest_version = client.get_latest_versions(model_name, stages=stages)
-            if not latest_version:
-                raise RuntimeError(f"No {stages} version of {model_name}")
-            model_uri = f'models:/{model_name}/{latest_version}'
-            logger.info(f"Fetching model from: {model_uri}")
-            return mlflow.pyfunc.load_model(model_uri)   
-        except Exception as e:
-            raise DetailedException(exc=e, logger=logger) from e
 
     
     def predict(self, df:pd.DataFrame) -> pd.Series:

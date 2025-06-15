@@ -5,6 +5,7 @@ from pathlib import Path
 
 from src.logger import configure_logger
 from src.exception import DetailedException
+from src.utils.mlflow_utils import configure_mlflow
 from src.utils.main_utils import load_object, load_json, load_params
 from src.entity.config_entity import ModelRegistryConfig
 from src.entity.artifact_entity import ModelTrainerArtifact, ModelEvaluationArtifact, FeatureEngineeringArtifact
@@ -53,25 +54,7 @@ class ModelRegistry:
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
     
-    def configure_mlflow(self, experiment_name:str)->None:
-        """
-        Configures MLflow and DagsHub for tracking.
-
-        Args:
-            experiment_name (str): The name of the MLflow experiment.
-        """
-        try:
-            logger.info("Entered 'configure_mlflow' function of 'ModelRegistry' class.")
-            logger.debug("Setting up MLFlOW and Dagshub...")
-            mlflow.set_tracking_uri(uri=self.model_registry_config.mlflow_uri)
-            dagshub.init(repo_owner=self.model_registry_config.dagshub_repo_owner_name,
-                         repo_name=self.model_registry_config.dagshub_repo_name,
-                         mlflow=True)
-            mlflow.set_experiment(experiment_name)
-            logger.info("MLFlOW and Dagshub Congigured Successfully.")
-        except Exception as e:
-            raise DetailedException(exc=e, logger=logger) from e
-        
+    
     def register_model(self, run_id:str, artifact_path: str, model_name:str, stage:str):
         """
         Register a logged MLflow model under a given name and transition it to a stage.
@@ -109,7 +92,13 @@ class ModelRegistry:
         - Registers the model and vectorizer in MLflow Model Registry.
         """
         try:
-            self.configure_mlflow(experiment_name=self.model_registry_config.experiment_name)
+            configure_mlflow(
+            mlflow_uri=self.model_registry_config.mlflow_uri,
+            dagshub_repo_owner_name=self.model_registry_config.dagshub_repo_owner_name,
+            dagshub_repo_name=self.model_registry_config.dagshub_repo_name,
+            experiment_name=self.model_registry_config.experiment_name,
+            logger=logger,
+            )
             with mlflow.start_run() as run:
                 logger.info("Entered 'initiate_model_registration' method of 'ModelRegistry' class")
                 logger.info("\n" + "-" * 80)

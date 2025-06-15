@@ -5,6 +5,7 @@ import dask.dataframe as dd
 from dask.distributed import Client, LocalCluster
 from pathlib import Path
 
+from src.utils.mlflow_utils import configure_mlflow, get_latest_model
 from src.entity.config_entity import BatchPredictionConfig
 from src.logger import configure_logger
 from src.exception import DetailedException
@@ -72,22 +73,24 @@ class BatchPredictionPipeline:
             self.client = start_client()
 
             # Configure MLflow
-            mlflow.set_tracking_uri(self.config.mlflow_uri)
-            dagshub.init(
-                repo_owner=self.config.dagshub_repo_owner_name,
-                repo_name=self.config.dagshub_repo_name,
-                mlflow=True
+            configure_mlflow(
+                mlflow_uri=self.config.mlflow_uri,
+                dagshub_repo_owner_name=self.config.dagshub_repo_owner_name,
+                dagshub_repo_name=self.config.dagshub_repo_name,
+                logger=logger,
             )
 
             # Load vectorizer and model once
-            client = mlflow.MlflowClient()
-            vec_versions = client.get_latest_versions(self.config.mlflow_vectorizer_name, stages=self.config.mlflow_model_stages)
-            vec_uri = f"models:/{self.config.mlflow_vectorizer_name}/{vec_versions[0].version}"
-            self.vectorizer = mlflow.pyfunc.load_model(vec_uri)
-
-            mdl_versions = client.get_latest_versions(self.config.mlflow_model_name, stages=self.config.mlflow_model_stages)
-            mdl_uri = f"models:/{self.config.mlflow_model_name}/{mdl_versions[0].version}"
-            self.model = mlflow.pyfunc.load_model(mdl_uri)
+            self.vectorizer = get_latest_model(
+                model_name=self.prediction_pipeline_congfig.mlflow_vectorizer_name,
+                stages=self.prediction_pipeline_congfig.mlflow_model_stages,
+                logger=logger
+            )
+            self.model = get_latest_model(
+                model_name=self.prediction_pipeline_congfig.mlflow_model_name,
+                stages=self.prediction_pipeline_congfig.mlflow_model_stages,
+                logger=logger
+            )
 
             logger.info("BatchPredictionPipeline configured.")
         except Exception as e:

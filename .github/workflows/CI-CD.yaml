@@ -1,9 +1,9 @@
-name: CI-CD Pipeline
+# name: CI-CD Pipeline
 
-on:
-  push:
-     branches:
-       - main
-jobs:
-  Continues_Integration:
-  
+# on:
+#   push:
+#      branches:
+#        - main
+# jobs:
+#   Continues_Integration:
+
