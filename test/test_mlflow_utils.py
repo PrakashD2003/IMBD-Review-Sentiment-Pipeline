@@ -13,7 +13,7 @@ def test_get_latest_model_no_versions():
     client_mock = mock.Mock()
     client_mock.get_latest_versions.return_value = []
     with mock.patch('mlflow.MlflowClient', return_value=client_mock):
-       with pytest.raises(DetailedException):
+       with pytest.raises(RuntimeError):
             get_latest_model('model', ['Production'])
 
 

@@ -1,0 +1,6 @@
+pytest
+httpx
+pandas
+dask
+mlflow
+fastapi

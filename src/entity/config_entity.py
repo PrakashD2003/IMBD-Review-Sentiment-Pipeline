@@ -44,7 +44,7 @@ class ModelRegistryConfig:
     dagshub_repo_owner_name:str = DAGSHUB_REPO_OWNER_NAME
     experiment_name:str = EXPERIMENT_NAME
     mlflow_model_name:str = MODEL_NAME
-    mlflow_model_stage:str = MODEL_STAGE
+    mlflow_model_stage:str = MODEL_REGISTRY_MODEL_STAGE
     mlflow_vectorizer_name:str = VECTORIZER_NAME
     mlflow_model_artifact_path:str = MODEL_ARTIFACT_PATH
     mlflow_vectorizer_artifact_path:str = VECTORIZER_ARTIFACT_PATH
