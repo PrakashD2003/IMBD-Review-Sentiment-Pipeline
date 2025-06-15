@@ -5,16 +5,16 @@ stages:
     deps:
     - path: ./src/pipelines/training_pipeline.py
       hash: md5
-      md5: 1187f6fce5c43ceb7cf7b38895d58153
-      size: 1769
+      md5: fbddfc9e813f083723bdda14d45b8c53
+      size: 2019
     - path: params.yaml
       hash: md5
-      md5: 20d1c36c0cbfcb547591edb9ab6dc81b
-      size: 1020
+      md5: ba6c570b2ea99218310f8e177b70a54d
+      size: 1019
     - path: src/data/data_ingestion.py
       hash: md5
-      md5: 9b92076c9611749117becab045954b89
-      size: 8037
+      md5: 1334c8e259d0e5f5b353caacba6efe5c
+      size: 8013
     params:
       params.yaml:
         data_ingestion_params.random_state: 42
@@ -41,8 +41,8 @@ stages:
     deps:
     - path: ./src/pipelines/training_pipeline.py
       hash: md5
-      md5: 1187f6fce5c43ceb7cf7b38895d58153
-      size: 1769
+      md5: fbddfc9e813f083723bdda14d45b8c53
+      size: 2019
     - path: data/interim/test
       hash: md5
       md5: 5a5071302e770a3e581ddad199f98def.dir
@@ -55,12 +55,12 @@ stages:
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: 20d1c36c0cbfcb547591edb9ab6dc81b
-      size: 1020
+      md5: ba6c570b2ea99218310f8e177b70a54d
+      size: 1019
     - path: src/data/data_preprocessing.py
       hash: md5
-      md5: c6496dafda14c795bd849cd677be235e
-      size: 8283
+      md5: f103c4caa306a9538b284b06ffce497e
+      size: 8274
     params:
       params.yaml:
         data_preprocessing_params.text_column_for_preprocessing: review
@@ -80,8 +80,8 @@ stages:
     deps:
     - path: ./src/pipelines/training_pipeline.py
       hash: md5
-      md5: 1187f6fce5c43ceb7cf7b38895d58153
-      size: 1769
+      md5: fbddfc9e813f083723bdda14d45b8c53
+      size: 2019
     - path: data/processed/preprocessed_test_data
       hash: md5
       md5: 54950f65309c876b796b0c40e0ee6f9b.dir
@@ -94,12 +94,12 @@ stages:
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: 20d1c36c0cbfcb547591edb9ab6dc81b
-      size: 1020
+      md5: ba6c570b2ea99218310f8e177b70a54d
+      size: 1019
     - path: src/features/feature_engineering.py
       hash: md5
-      md5: ced0863cbfbb137f0894d144aeb08398
-      size: 11334
+      md5: 84e75f1b235289be588ed1fce26506c6
+      size: 11225
     params:
       params.yaml:
         TF-IDF_Params.max_df: 0.9
@@ -122,7 +122,7 @@ stages:
       nfiles: 3
     - path: saved_models/vectorizer
       hash: md5
-      md5: 761421b91cfe6b8be5b184777a43fd03.dir
+      md5: fbabaf84f3cdd24e143e89e6ced684bb.dir
       size: 183126
       nfiles: 1
   model_training:
@@ -130,8 +130,8 @@ stages:
     deps:
     - path: ./src/pipelines/training_pipeline.py
       hash: md5
-      md5: 1187f6fce5c43ceb7cf7b38895d58153
-      size: 1769
+      md5: fbddfc9e813f083723bdda14d45b8c53
+      size: 2019
     - path: data/feature_engineered/feature_engineered_training_data
       hash: md5
       md5: ee48ec6c8bc41670d3b27b965d3b3869.dir
@@ -139,12 +139,12 @@ stages:
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: 20d1c36c0cbfcb547591edb9ab6dc81b
-      size: 1020
+      md5: ba6c570b2ea99218310f8e177b70a54d
+      size: 1019
     - path: src/model/train_model.py
       hash: md5
-      md5: 0e3cbb1c1d57a0c6669018afbef7c3c7
-      size: 6158
+      md5: 9df17bea60758605e437760a94f47f7c
+      size: 6010
     params:
       params.yaml:
         Model_Params.C: 0.1
@@ -165,8 +165,8 @@ stages:
     deps:
     - path: ./src/pipelines/training_pipeline.py
       hash: md5
-      md5: 1187f6fce5c43ceb7cf7b38895d58153
-      size: 1769
+      md5: fbddfc9e813f083723bdda14d45b8c53
+      size: 2019
     - path: data/feature_engineered/feature_engineered_test_data
       hash: md5
       md5: 2fb348d99d1954a1034ece4e993856b4.dir
@@ -174,12 +174,12 @@ stages:
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: 20d1c36c0cbfcb547591edb9ab6dc81b
-      size: 1020
+      md5: ba6c570b2ea99218310f8e177b70a54d
+      size: 1019
     - path: src/model/evaluate_model.py
       hash: md5
-      md5: 1bdb796ce6a9b181374d9ef80b8b0a83
-      size: 8183
+      md5: 10af0f631502c5ae7738af4f34cb184c
+      size: 8178
     params:
       params.yaml:
         Target_Col: sentiment

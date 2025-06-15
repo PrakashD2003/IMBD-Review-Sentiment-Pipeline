@@ -112,8 +112,8 @@ class ModelRegistry:
             self.configure_mlflow(experiment_name=self.model_registry_config.experiment_name)
             with mlflow.start_run() as run:
                 logger.info("Entered 'initiate_model_registration' method of 'ModelRegistry' class")
-                print("\n" + "-"*80)
-                print("🚀 Starting Model Registry Component...")
+                logger.info("\n" + "-" * 80)
+                logger.info("Starting Model Registry Component...")
 
                 logger.debug("Loading Performance Metrics from: %s", self.model_evaluation_artifact.performance_metrics_file_path)
                 performance_metrics = load_json(file_path=self.model_evaluation_artifact.performance_metrics_file_path, logger=logger)

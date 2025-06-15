@@ -119,7 +119,7 @@ class FeatureEngineering:
           
 
             # Apply to each partition
-            logger.debug("Vectorizing training partitions…")
+            logger.debug("Vectorizing training partitions...")
             train_vec = train_ddf.map_partitions(_transform_partition,
                                                 column=column,
                                                 feature_names=feature_names,
@@ -128,7 +128,7 @@ class FeatureEngineering:
                                                 )
             logger.info("Training data vectorized into %d features.", len(feature_names))
 
-            logger.debug("Vectorizing test partitions…")
+            logger.debug("Vectorizing test partitions...")
             test_vec = test_ddf.map_partitions(_transform_partition,
                                             column=column,
                                             feature_names=feature_names,
@@ -158,8 +158,8 @@ class FeatureEngineering:
         """
         try:
             logger.info("Entered 'initiate_feature_engineering' method of 'FeatureEngineering' class")
-            print("\n" + "-"*80)
-            print("🚀 Starting Feature Engineering Component...")
+            print("\n" + "-" * 80)
+            print("Starting Feature Engineering Component...")
 
             logger.debug("Loading Training data from: %s",self.data_preprocessing_artifact.preprocessed_training_data_file_path)
             train_ddf = load_parquet_as_dask_dataframe(file_path=self.data_preprocessing_artifact.preprocessed_training_data_file_path,

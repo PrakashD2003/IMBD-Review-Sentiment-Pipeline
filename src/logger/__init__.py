@@ -4,7 +4,7 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from pathlib import Path
 from colorlog import ColoredFormatter
-from src.logger.global_logging import LOG_SESSION_TIME
+# from src.logger.global_logging import LOG_SESSION_TIME
 
 LOG_DIR = "logs"
 MAX_LOG_SIZE = 5 * 1024 * 1024  # 5 MB
@@ -26,7 +26,7 @@ def configure_logger(logger_name:str, level:str = "INFO",
     """
     # Determine project root (2 levels up: src/logger -> src -> project root)
     base_dir = Path(__file__).resolve().parents[2]
-    log_dir_path = base_dir / LOG_DIR / LOG_SESSION_TIME
+    log_dir_path = base_dir / LOG_DIR 
     log_dir_path.mkdir(parents=True, exist_ok=True)
     
     # Create or retrieve the logger

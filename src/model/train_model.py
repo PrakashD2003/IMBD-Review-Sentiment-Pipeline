@@ -72,7 +72,7 @@ class ModelTrainer:
             clf = LogisticRegression(**model_params)
             logger.info("'LogisticRegression' object initialized successfully")
 
-            logger.debug("Fitting model in parallel over Dask…")
+            logger.debug("Fitting model in parallel over Dask...")
             with joblib.parallel_backend("dask"):
                 clf.fit(X=x_train, y=y_train)
             logger.info("Model trained successfully.")
@@ -93,8 +93,8 @@ class ModelTrainer:
         """
         try:
             logger.info("Entered 'initiate_model_training' method of 'ModelTrainer' class")
-            print("\n" + "-"*80)
-            print("🚀 Starting Model Trainer Component...")
+            print("\n" + "-" * 80)
+            print("Starting Model Trainer Component...")
 
             logger.debug("Loading training data from: %s", self.feature_engineering_artifact.feature_engineered_training_data_file_path)
             train_ddf = load_parquet_as_dask_dataframe(file_path=self.feature_engineering_artifact.feature_engineered_training_data_file_path,

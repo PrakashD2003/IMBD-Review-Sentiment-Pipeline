@@ -2,7 +2,8 @@ import os
 import logging
 import uvicorn
 import multiprocessing
-import pandas as pd         
+import pandas as pd      
+import subprocess   
 from pathlib import Path
 from typing import List
 
@@ -145,6 +146,47 @@ async def metrics():
     """
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
+
+# ─── Training and DVC push endpoints ─────────────────────────────────────────
+
+@app.post("/train")
+async def trigger_training():
+    """Run the DVC training pipeline using `dvc repro`."""
+    repo_root = Path(__file__).resolve().parents[1]
+    try:
+        result = subprocess.run([
+            "dvc", "repro", "-f"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            logger.error("Training failed: %s", result.stderr)
+            raise HTTPException(status_code=500, detail=result.stderr)
+        return {"detail": "Training pipeline triggered"}
+    except FileNotFoundError:
+        logger.error("dvc executable not found")
+        raise HTTPException(status_code=500, detail="dvc is not installed")
+
+
+@app.post("/dvc_push")
+async def trigger_dvc_push():
+    """Push artifacts to the configured DVC remote."""
+    repo_root = Path(__file__).resolve().parents[1]
+    try:
+        result = subprocess.run(
+            ["dvc", "push"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            logger.error("DVC push failed: %s", result.stderr)
+            raise HTTPException(status_code=500, detail=result.stderr)
+        return {"detail": "Push completed"}
+    except FileNotFoundError:
+        logger.error("dvc executable not found")
+        raise HTTPException(status_code=500, detail="dvc is not installed")
 
 if __name__ == "__main__":
     uvicorn.run(

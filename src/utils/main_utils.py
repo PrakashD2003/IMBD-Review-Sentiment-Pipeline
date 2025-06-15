@@ -379,7 +379,7 @@ def save_json(
         log.info("Parent directory ready: %s", parent_dir)
 
         with open(file_path, "w") as file:
-            json.dump(dict, file, indent=4)
+            json.dump(data, file, indent=4)
             log.info("Json successfully saved at: %s", file_path)
 
     except Exception as e:
