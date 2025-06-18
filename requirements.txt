@@ -1,4 +1,3 @@
-eze requirements.txt
 aiobotocore==2.22.0
 aiohappyeyeballs==2.6.1
 aiohttp==3.12.12
@@ -106,6 +105,7 @@ httpx==0.28.1
 hydra-core==1.3.2
 idna==3.10
 importlib_metadata==8.7.0
+iniconfig==2.1.0
 ipykernel==6.29.5
 ipython==8.37.0
 ipywidgets==8.1.7
@@ -179,6 +179,7 @@ pathspec==0.12.1
 pathvalidate==3.2.3
 pillow==11.2.1
 platformdirs==4.3.8
+pluggy==1.6.0
 prometheus_client==0.22.1
 prompt_toolkit==3.0.51
 propcache==0.3.2
@@ -196,6 +197,7 @@ pygit2==1.18.0
 Pygments==2.19.1
 pygtrie==2.5.0
 pyparsing==3.2.3
+pytest==8.4.0
 python-dateutil==2.9.0.post0
 python-json-logger==3.3.0
 python-slugify==8.0.4
@@ -235,7 +237,7 @@ sparse==0.17.0
 SQLAlchemy==2.0.41
 sqlparse==0.5.3
 sqltrie==0.11.2
--e git+https://github.com/PrakashD2003/IMBD-Review-Sentiment-Pipeline.git@1c1704143b01303664d6c02e1faed79ad2d2b371#egg=src
+-e .
 stack-data==0.6.3
 starlette==0.46.2
 tabulate==0.9.0
