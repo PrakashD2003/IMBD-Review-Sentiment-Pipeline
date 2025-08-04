@@ -1,3 +1,11 @@
+tempCodeRunnerFile.py
+
+artifacts/
+
+# Ignore DVC cache and state
+.dvc/
+.cache/
+
 saved_models
 reports
 
@@ -70,7 +78,7 @@ Thumbs.db
 # (Optional) checkpoint metadata
 .dvc/checkpoints/
 
-data
+
 s3_local
 cred.txt
 projectflow.txt

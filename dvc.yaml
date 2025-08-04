@@ -1,40 +1,40 @@
 stages:
   data_ingestion:
-    cmd: python ./src/pipelines/training_pipeline.py --step ingestion
+    cmd: python ./services/training/pipelines/training_pipeline.py --step ingestion
     deps:
-      - ./src/pipelines/training_pipeline.py
-      - src/data/data_ingestion.py
+      - services/training/pipelines/training_pipeline.py
+      - services/training/data/data_ingestion.py
       - params.yaml
     params:
       - data_ingestion_params.test_size
       - data_ingestion_params.random_state
       - data_ingestion_params.shuffle
     outs:
-      - data/raw
-      - data/interim/train
-      - data/interim/test
+      - artifacts/data/raw
+      - artifacts/data/interim/train
+      - artifacts/data/interim/test
 
   data_preprocessing:
-    cmd: python ./src/pipelines/training_pipeline.py --step preprocess
+    cmd: python ./services/training/pipelines/training_pipeline.py --step preprocess
     deps:
-      - ./src/pipelines/training_pipeline.py
-      - src/data/data_preprocessing.py
-      - data/interim/train
-      - data/interim/test
+      - ./services/training/pipelines/training_pipeline.py
+      - services/training/data/data_preprocessing.py
+      - artifacts/data/interim/train
+      - artifacts/data/interim/test
       - params.yaml
     params:
       - data_preprocessing_params.text_column_for_preprocessing
     outs:
-      - data/processed/preprocessed_training_data
-      - data/processed/preprocessed_test_data
+      - artifacts/data/processed/preprocessed_training_data
+      - artifacts/data/processed/preprocessed_test_data
 
   feature_engineering:
-    cmd: python ./src/pipelines/training_pipeline.py --step fe
+    cmd: python ./services/training/pipelines/training_pipeline.py --step fe
     deps:
-      - ./src/pipelines/training_pipeline.py
-      - src/features/feature_engineering.py
-      - data/processed/preprocessed_training_data
-      - data/processed/preprocessed_test_data
+      - ./services/training/pipelines/training_pipeline.py
+      - services/training/features/feature_engineering.py
+      - artifacts/data/processed/preprocessed_training_data
+      - artifacts/data/processed/preprocessed_test_data
       - params.yaml
     params:
       - feature_engineering_params.text_column_for_engineering
@@ -43,16 +43,16 @@ stages:
       - TF-IDF_Params.max_features
       - TF-IDF_Params.ngram_range
     outs:
-      - data/feature_engineered/feature_engineered_training_data
-      - data/feature_engineered/feature_engineered_test_data
-      - saved_models/vectorizer
+      - artifacts/data/feature_engineered/feature_engineered_training_data
+      - artifacts/data/feature_engineered/feature_engineered_test_data
+      - artifacts/saved_models/vectorizer
 
   model_training:
-    cmd: python ./src/pipelines/training_pipeline.py --step train
+    cmd: python ./services/training/pipelines/training_pipeline.py --step train
     deps:
-      - ./src/pipelines/training_pipeline.py
-      - src/model/train_model.py
-      - data/feature_engineered/feature_engineered_training_data
+      - ./services/training/pipelines/training_pipeline.py
+      - services/training/model/train_model.py
+      - artifacts/data/feature_engineered/feature_engineered_training_data
       - params.yaml
     params:
       - Target_Col
@@ -63,26 +63,26 @@ stages:
       - Model_Params.tol
       - Model_Params.random_state
     outs:
-      - saved_models/model
+      - artifacts/saved_models/model
 
   model_evaluation:
-    cmd: python ./src/pipelines/training_pipeline.py --step evaluate
+    cmd: python ./services/training/pipelines/training_pipeline.py --step evaluate
     deps:
-      - ./src/pipelines/training_pipeline.py
-      - src/model/evaluate_model.py
-      - data/feature_engineered/feature_engineered_test_data
+      - ./services/training/pipelines/training_pipeline.py
+      - services/training/model/evaluate_model.py
+      - artifacts/data/feature_engineered/feature_engineered_test_data
       - params.yaml
     params:
       - Target_Col
     metrics:
-      - reports/performance_metrics.json
+      - artifacts/reports/performance_metrics.json
 
   model_registry:
-    cmd: python ./src/pipelines/training_pipeline.py --step register
+    cmd: python ./services/training/pipelines/training_pipeline.py --step register
     deps:
-      - ./src/pipelines/training_pipeline.py
-      - src/model/register_model.py
-      - saved_models/model
-      - saved_models/vectorizer
-      - reports/performance_metrics.json
+      - ./services/training/pipelines/training_pipeline.py
+      - services/training/model/register_model.py
+      - artifacts/saved_models/model
+      - artifacts/saved_models/vectorizer
+      - artifacts/reports/performance_metrics.json
       - params.yaml

@@ -1,5 +1,4 @@
-import json
-from src.utils.main_utils import save_json, load_json
+from common.utils.main_utils import save_json, load_json
 
 
 def test_save_and_load_json(tmp_path):

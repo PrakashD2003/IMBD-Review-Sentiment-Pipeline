@@ -2,7 +2,7 @@ import pandas as pd
 import dask.dataframe as dd
 from unittest.mock import patch, MagicMock
 
-from src.data.data_ingestion import DataIngestion
+from services.training.data.data_ingestion import DataIngestion
 
 
 def test_basic_preprocessing_filters_and_encodes():

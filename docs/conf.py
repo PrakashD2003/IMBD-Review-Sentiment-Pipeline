@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Capstone-Project documentation build configuration file, created by
+# IMDb-REVIEW-SENTIMENT-ANALYSIS-doc documentation build configuration file, created by
 # sphinx-quickstart.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -14,6 +14,9 @@
 import os
 import sys
 
+# Ensure project root is on the Python path so ``autodoc`` can find modules
+sys.path.insert(0, os.path.abspath('..'))
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -26,7 +29,10 @@ import sys
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = []
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -41,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Capstone-Project'
+project = u'IMDb-REVIEW-SENTIMENT-ANALYSIS'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -164,7 +170,7 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Capstone-Projectdoc'
+htmlhelp_basename = 'IMDb-REVIEW-SENTIMENT-ANALYSIS-doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -184,8 +190,8 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
     ('index',
-     'Capstone-Project.tex',
-     u'Capstone-Project Documentation',
+     'IMDb-REVIEW-SENTIMENT-ANALYSIS-doc.tex',
+     u'IMDb-REVIEW-SENTIMENT-ANALYSIS-doc Documentation',
      u"Prakash Dwivedi", 'manual'),
 ]
 
@@ -215,7 +221,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'Capstone-Project', u'Capstone-Project Documentation',
+    ('index', 'IMDb-REVIEW-SENTIMENT-ANALYSIS-doc', u'IMDb-REVIEW-SENTIMENT-ANALYSIS-doc Documentation',
      [u"Prakash Dwivedi"], 1)
 ]
 
@@ -229,8 +235,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'Capstone-Project', u'Capstone-Project Documentation',
-     u"Prakash Dwivedi", 'Capstone-Project',
+    ('index', 'IMDb-REVIEW-SENTIMENT-ANALYSIS-doc', u'IMDb-REVIEW-SENTIMENT-ANALYSIS-doc Documentation',
+     u"Prakash Dwivedi", 'IMDb-REVIEW-SENTIMENT-ANALYSIS-doc',
      'A short description of the project.', 'Miscellaneous'),
 ]
 

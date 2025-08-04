@@ -1,0 +1,1 @@
+"""Data access and preprocessing components for the sentiment pipeline."""

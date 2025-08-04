@@ -1,7 +1,7 @@
 import pandas as pd
 import dask.dataframe as dd
-from src.model.train_model import ModelTrainer
-from src.utils.main_utils import save_object
+from services.training.model.train_model import ModelTrainer
+from common.utils.main_utils import save_object
 from dask.distributed import Client
 
 

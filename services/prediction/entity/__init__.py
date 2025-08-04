@@ -1,0 +1,1 @@
+"""Dataclass definitions for pipeline configurations and artifacts."""

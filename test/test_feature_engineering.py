@@ -1,6 +1,6 @@
 import pandas as pd
 import dask.dataframe as dd
-from src.features.feature_engineering import FeatureEngineering
+from services.training.features.feature_engineering import FeatureEngineering
 
 
 def test_tfidf_vectorization_shape():

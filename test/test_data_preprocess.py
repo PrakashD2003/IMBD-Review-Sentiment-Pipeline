@@ -1,6 +1,6 @@
 import pandas as pd
 import dask.dataframe as dd
-from src.data.data_preprocessing import DataPreprocessing
+from services.training.data.data_preprocessing import DataPreprocessing
 
 
 def test_preprocess_data_removes_nulls_and_cleans():

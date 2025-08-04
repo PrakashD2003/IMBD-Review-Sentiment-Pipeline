@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "imdb-review-sentiment-pipeline"
+version = "0.1.0"
+description = "IMDB review sentiment analysis with separate training and prediction microservices."
+readme = "README.md"
+authors = [{name = "Prakash Dwivedi"}]
+requires-python = ">=3.10"
+dependencies = [
+    "pandas",
+    "scikit-learn",
+    "dask[distributed]",
+]
+
+[project.optional-dependencies]
+prediction = [
+    "fastapi",
+    "uvicorn",
+    "prometheus-client",
+    "pydantic",
+]
+training = [
+    "dvc",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "fast_api_app*","services*","training*","prediction*","common*"]

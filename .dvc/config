@@ -1,4 +1,4 @@
 [core]
-    remote = my_remote
-['remote "my_remote"']
-    url = s3://imbd-project-dvc-repo
+    remote = myremote
+['remote "myremote"']
+    url = s3://imbd-project-dvc-repo/files/

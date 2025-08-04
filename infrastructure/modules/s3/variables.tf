@@ -40,5 +40,5 @@ variable "s3_tags" {
 variable "s3_output_file" {
   description = "Path to write out ecr metadata"
   type = string
-  default = "./inrastructure/outputs/s3_metadata.json"
+  default = "./infrastructure/outputs/s3_metadata.json"
 }

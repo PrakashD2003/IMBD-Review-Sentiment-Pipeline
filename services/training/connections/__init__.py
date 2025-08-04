@@ -1,0 +1,1 @@
+"""Connection utilities for accessing external services such as Amazon S3."""

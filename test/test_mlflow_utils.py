@@ -2,8 +2,7 @@ import types
 from unittest import mock
 import pytest
 
-from src.utils.mlflow_utils import get_latest_model
-from src.exception import DetailedException
+from common.utils.mlflow_utils import get_latest_model
 
 class DummyModel:
     pass

@@ -1,7 +1,7 @@
 import types
 from unittest.mock import patch, MagicMock
 
-from src.model.register_model import ModelRegistry
+from services.training.model.register_model import ModelRegistry
 
 
 def test_register_model_registers_and_transitions():
