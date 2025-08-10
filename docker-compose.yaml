@@ -1,0 +1,47 @@
+# docker-compose.yaml
+
+x-common-env: &common-env
+  env_file:
+    - .env
+
+services:
+  training:
+    image: prakash3112/imdb-project-repo:training-service-image
+    <<: *common-env
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./pipeline_storage/.dvc:/app/.dvc
+      - ./pipeline_storage/artifacts:/app/artifacts
+      - ./pipeline_storage/logs:/app/logs
+    networks:
+      - my-network
+
+  prediction:
+    image: prakash3112/imdb-project-repo:prediction-service-image
+    depends_on:
+      - training
+    <<: *common-env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./pipeline_storage/artifacts:/app/artifacts
+      - ./pipeline_storage/logs:/app/logs
+    networks:
+      - my-network
+
+  frontend:
+    image: prakash3112/imdb-project-repo:frontend-image
+    depends_on:
+      - training
+      - prediction
+    ports:
+      - "3000:80"
+    volumes:
+      - ./pipeline_storage/logs:/var/log/nginx
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
