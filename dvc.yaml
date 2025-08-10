@@ -1,6 +1,6 @@
 stages:
   data_ingestion:
-    cmd: python ./services/training/pipelines/training_pipeline.py --step ingestion
+    cmd: python -m services.training.pipelines.training_pipeline --step ingestion
     deps:
       - services/training/pipelines/training_pipeline.py
       - services/training/data/data_ingestion.py
@@ -15,7 +15,7 @@ stages:
       - artifacts/data/interim/test
 
   data_preprocessing:
-    cmd: python ./services/training/pipelines/training_pipeline.py --step preprocess
+    cmd: python -m services.training.pipelines.training_pipeline --step preprocess
     deps:
       - ./services/training/pipelines/training_pipeline.py
       - services/training/data/data_preprocessing.py
@@ -29,7 +29,7 @@ stages:
       - artifacts/data/processed/preprocessed_test_data
 
   feature_engineering:
-    cmd: python ./services/training/pipelines/training_pipeline.py --step fe
+    cmd: python -m services.training.pipelines.training_pipeline --step fe
     deps:
       - ./services/training/pipelines/training_pipeline.py
       - services/training/features/feature_engineering.py
@@ -48,7 +48,7 @@ stages:
       - artifacts/saved_models/vectorizer
 
   model_training:
-    cmd: python ./services/training/pipelines/training_pipeline.py --step train
+    cmd: python -m services.training.pipelines.training_pipeline --step train
     deps:
       - ./services/training/pipelines/training_pipeline.py
       - services/training/model/train_model.py
@@ -66,7 +66,7 @@ stages:
       - artifacts/saved_models/model
 
   model_evaluation:
-    cmd: python ./services/training/pipelines/training_pipeline.py --step evaluate
+    cmd: python -m services.training.pipelines.training_pipeline --step evaluate
     deps:
       - ./services/training/pipelines/training_pipeline.py
       - services/training/model/evaluate_model.py
@@ -78,7 +78,7 @@ stages:
       - artifacts/reports/performance_metrics.json
 
   model_registry:
-    cmd: python ./services/training/pipelines/training_pipeline.py --step register
+    cmd: python -m services.training.pipelines.training_pipeline --step register
     deps:
       - ./services/training/pipelines/training_pipeline.py
       - services/training/model/register_model.py

@@ -1,4 +1,2 @@
-[core]
-    remote = myremote
 ['remote "myremote"']
     url = s3://imbd-project-dvc-repo/files/

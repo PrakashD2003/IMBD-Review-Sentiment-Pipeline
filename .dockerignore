@@ -1,0 +1,64 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# DVC files (if you want to ignore cache/local data)
+.dvc/cache/
+.dvc/tmp/
+.dvc/plots/
+*.dvc
+
+# Jupyter/IPython files
+.ipynb_checkpoints/
+*.ipynb
+
+# VSCode/IDE/editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System/OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Test & temp files
+*.log
+*.tmp
+*.bak
+*.old
+*.orig
+*.test.*
+tests/
+coverage.*
+htmlcov/
+.tox/
+.pytest_cache/
+
+# NodeJS frontend artifacts (if any)
+node_modules/
+build/
+dist/
+*.tgz
+
+# Environment files
+.env
+.env.*
+
+# Docker stuff
+Dockerfile
+docker-compose.yml
+
+# Others (if any large datasets in root)
+data/
+datasets/
+logs/
+
+doc/
+artifacts/
+logs/

@@ -258,35 +258,46 @@ def stream_training_logs():
 @app.post("/dvc_push")
 def trigger_dvc_push():
     """
-    Push artifacts to the configured DVC remote using `dvc push`.
+    Trigger a DVC data push and Git commit after training.
 
-    Returns
-    -------
-    dict
-        Status message indicating success.
+    This endpoint runs the `post_train_commit.sh` script located in
+    `services/training/scripts/`. The script is responsible for pushing
+    updated data artifacts to the configured DVC remote and committing
+    the changes to Git.
 
-    Raises
-    ------
-    HTTPException
-        If `dvc` is missing or the push fails.
+    Workflow:
+        1. Determine the repository root using `get_repo_root()`.
+        2. Execute `post_train_commit.sh` with Bash from the repo root.
+        3. Capture stdout/stderr for logging and debugging.
+
+    Returns:
+        dict: A JSON response with a `detail` message indicating success.
+
+    Raises:
+        HTTPException (500):
+            - If the script returns a non-zero exit code (subprocess error).
+            - If the script file is not found at the expected location.
+
+    Notes:
+        - Requires `bash` to be installed in the environment.
+        - The script must handle both `dvc push` and `git commit` internally.
     """
     repo_root = get_repo_root()
     try:
-        with DVC_PUSH_DURATION.time():
-            result = subprocess.run(
-                ["dvc", "push"],
-                cwd=repo_root,
-                capture_output=True,
-                text=True,
-            )
-        if result.returncode != 0:
-            logger.error("DVC push failed: %s", result.stderr)
-            raise HTTPException(status_code=500, detail=result.stderr.strip())
-        logger.info("DVC push succeeded: %s", result.stdout.strip())
-        return {"detail": "Push completed"}
+        result = subprocess.run(
+            ["bash", "services/training/scripts/post_train_commit.sh"],  # script handles dvc push & git commit
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        logger.info("Post-train script: %s", result.stdout.strip())
+        return {"detail": "Push & commit completed"}
+    except subprocess.CalledProcessError as e:
+        logger.error("Post-train script failed: %s", e.stderr)
+        raise HTTPException(status_code=500, detail=e.stderr.strip())
     except FileNotFoundError:
-        logger.error("dvc executable not found")
-        raise HTTPException(status_code=500, detail="dvc is not installed")
+        raise HTTPException(status_code=500, detail="script not found")
 
 
 @app.get("/dvc_status")
