@@ -1,2 +1,6 @@
+[core]
+    remote = storage
 ['remote "myremote"']
     url = s3://imbd-project-dvc-repo/files/
+['remote "storage"']
+    url = s3://imbd-project-dvc-repo/dvc-storage
