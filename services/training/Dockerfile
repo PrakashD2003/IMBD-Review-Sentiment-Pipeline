@@ -8,14 +8,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Build tools only here (discarded later)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      gcc build-essential \
+      gcc build-essential git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install deps into isolated venv (so runtime stays slim)
 COPY requirements-training.txt .
 RUN python -m venv /opt/venv \
-  && /opt/venv/bin/pip install --no-cache-dir -r requirements-training.txt \
-  && /opt/venv/bin/pip install --no-cache-dir dvc[s3]
+ && /opt/venv/bin/pip install --no-cache-dir -r requirements-training.txt
 
 # Copy only source needed at runtime
 COPY services/training /app/services/training
@@ -29,6 +28,11 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH"
+
+# Install git for DVC operations
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Bring in the venv and app
 COPY --from=build /opt/venv /opt/venv
