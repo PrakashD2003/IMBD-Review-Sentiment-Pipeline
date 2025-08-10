@@ -1,8 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+PYTHON_BIN=$(command -v python || command -v python3 || command -v py || true)
+
 echo "[post-train] Pushing DVC-tracked data..."
-dvc push
+if command -v dvc >/dev/null 2>&1; then
+  dvc push
+else
+  if [[ -z "${PYTHON_BIN}" ]]; then
+    echo "[post-train] Python interpreter not found. Cannot run 'dvc push'." >&2
+    exit 1
+  fi
+  "${PYTHON_BIN}" -m dvc push
+fi
 
 echo "[post-train] Staging pipeline files..."
 git add -A dvc.lock dvc.yaml 2>/dev/null || true
