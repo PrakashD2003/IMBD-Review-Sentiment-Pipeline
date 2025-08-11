@@ -11,6 +11,7 @@ services:
     ports:
       - "8001:8001"
     volumes:
+      - ./.git:/app/.git:ro                
       - ./pipeline_storage/.dvc:/app/.dvc
       - ./pipeline_storage/artifacts:/app/artifacts
       - ./pipeline_storage/logs:/app/logs
@@ -25,6 +26,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      - ./.git:/app/.git:ro                
+      - ./pipeline_storage/.dvc:/app/.dvc
       - ./pipeline_storage/artifacts:/app/artifacts
       - ./pipeline_storage/logs:/app/logs
     networks:

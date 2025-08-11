@@ -124,7 +124,7 @@ stages:
       nfiles: 3
     - path: artifacts/saved_models/vectorizer
       hash: md5
-      md5: 9baba9b3bc0af118b9862cc5b458bed0.dir
+      md5: ccbeed9393bbc8bad2616b2648f6cf4e.dir
       size: 183126
       nfiles: 1
   model_training:

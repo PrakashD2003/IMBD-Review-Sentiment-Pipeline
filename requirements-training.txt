@@ -9,6 +9,7 @@ dask-ml==2025.1.0
 joblib==1.5.1
 nltk==3.9.1
 boto3==1.37.3
+mypy_boto3_s3
 s3fs==2025.5.1
 pyarrow==19.0.1
 pyyaml==6.0.2

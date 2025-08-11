@@ -62,3 +62,11 @@ logs/
 doc/
 artifacts/
 logs/
+
+node_modules
+dist
+.git
+.gitignore
+Dockerfile
+nginx.conf
+npm-debug.log
