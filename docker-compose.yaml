@@ -1,50 +1,106 @@
 # docker-compose.yaml
 
+version: '3.8'
+
+
+# Define a common environment variable anchor to be reused across services.
+# This points to a .env file in the root directory for centralized configuration.
 x-common-env: &common-env
   env_file:
     - .env
 
 services:
+  # 1. Add a dedicated Dask scheduler service
+  scheduler:
+    image: prakash3112/imdb-project-repo:training-service-image
+    container_name: dask-scheduler
+    command: dask-scheduler
+    environment:
+      - PYTHONPATH=/app
+    ports:
+      - "8786:8786"  # Scheduler communication port
+      - "8787:8787"  # Dask dashboard port
+    networks:
+      - imdb-network
+
+  # 2. Add one or more Dask worker services
+  worker:
+    image: prakash3112/imdb-project-repo:training-service-image
+    command: dask-worker scheduler:8786
+    depends_on:
+      - scheduler
+    environment:
+      - PYTHONPATH=/app
+    # Mount the same volumes as training and prediction services so workers can access, save, and share data.
+    volumes:
+      - ./pipeline_storage/.dvc:/app/.dvc
+      - ./pipeline_storage/artifacts:/app/artifacts
+      - ./pipeline_storage/logs:/app/logs
+    
+    networks:
+      - imdb-network
+
+  # The Training Service runs the DVC pipeline.
   training:
     image: prakash3112/imdb-project-repo:training-service-image
+    container_name: training-service
     <<: *common-env
+    # Add environment variable to point to the scheduler
+    environment:
+      - DASK_SCHEDULER_ADDRESS=scheduler:8786
+      - PYTHONPATH=/app
+    depends_on:
+      - scheduler # Ensure scheduler starts first
     ports:
       - "8001:8001"
     volumes:
-      - ./.git:/app/.git:ro                
+      # Mount the .git directory read-only so DVC can track commits.
+      - ./.git:/app/.git:ro
+      # Mount a local directory for persistent storage of DVC metadata,
+      # artifacts, and logs across container restarts.
       - ./pipeline_storage/.dvc:/app/.dvc
       - ./pipeline_storage/artifacts:/app/artifacts
       - ./pipeline_storage/logs:/app/logs
     networks:
-      - my-network
+      - imdb-network
 
+  # The Prediction Service serves the trained model for inference.
   prediction:
     image: prakash3112/imdb-project-repo:prediction-service-image
-    depends_on:
-      - training
+    container_name: prediction-service
     <<: *common-env
+    # Add environment variable to point to the scheduler
+    environment:
+      - DASK_SCHEDULER_ADDRESS=scheduler:8786
+      - PYTHONPATH=/app
+    depends_on:
+      - scheduler # Ensure scheduler starts first
     ports:
       - "8000:8000"
     volumes:
-      - ./.git:/app/.git:ro                
+      # Mount the same persistent storage to access the model artifacts
+      # produced by the training service.
       - ./pipeline_storage/.dvc:/app/.dvc
       - ./pipeline_storage/artifacts:/app/artifacts
       - ./pipeline_storage/logs:/app/logs
     networks:
-      - my-network
-
+      - imdb-network
+  # The Frontend Service provides the user interface.
   frontend:
     image: prakash3112/imdb-project-repo:frontend-image
+    container_name: frontend-service
     depends_on:
       - training
       - prediction
     ports:
-      - "3000:80"
+      - "3000:80"  # Expose the Nginx server on host port 3000
     volumes:
+      # Mount the logs directory to capture Nginx access/error logs.
       - ./pipeline_storage/logs:/var/log/nginx
     networks:
-      - my-network
+      - imdb-network
 
+# Define the shared network for inter-service communication.
 networks:
-  my-network:
+  imdb-network:
     driver: bridge

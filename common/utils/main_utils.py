@@ -1,6 +1,8 @@
 """General-purpose utilities for configuration, I/O and serialization."""
 
 import os
+import gc
+import time
 import json
 import dask.dataframe as ddf
 from dask.diagnostics import ProgressBar
@@ -297,7 +299,9 @@ def save_dask_dataframe_as_parquet(
                 write_index=index
             )
         logger.info("DataFrame successfully saved to Parquet: %s", file_save_path)
-
+        # ✅ Ensure all file handles are closed (important for Windows)
+        gc.collect()
+        time.sleep(2)  # small delay so OS releases handles
     except Exception as e:
         # Wrap in your DetailedException for consistency
         raise DetailedException(exc=e, logger=logger) from e

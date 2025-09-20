@@ -1,0 +1,41 @@
+# ---------- Build stage ----------
+FROM python:3.12-slim AS build
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Install build-time dependencies (git is no longer needed here)
+RUN apt-get update && apt-get install -y --no-install-recommends gcc build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies into an isolated virtual environment
+COPY requirements-prediction.txt .
+RUN python -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir -r requirements-prediction.txt
+
+# Copy only the necessary source code and configuration
+COPY services/prediction /app/services/prediction
+COPY common /app/common
+COPY params.yaml /app
+
+# ---------- Runtime stage ----------
+FROM python:3.12-slim AS runtime
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+# Copy the virtualenv and application code from the build stage
+COPY --from=build /opt/venv /opt/venv
+COPY --from=build /app /app
+
+# Create and switch to a non-root user for better security
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+# The CMD can now run directly without the entrypoint script
+CMD ["uvicorn", "services.prediction.api_end_point.prediction_fastapi_app:app", "--host", "0.0.0.0", "--port", "8000"]

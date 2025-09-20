@@ -1,5 +1,6 @@
 tempCodeRunnerFile.py
 
+pipeline_storage/
 artifacts/
 
 # Ignore DVC cache and state
