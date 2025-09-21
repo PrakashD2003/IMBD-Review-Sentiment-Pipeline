@@ -199,55 +199,84 @@ class ProductionDVCTrainingManager:
             logger.warning(f"Could not get DVC fingerprints: {e}")
             return {"error": str(e)}
     
-    def run_training_with_dvc(self) -> Dict[str, Any]:
-        """Execute complete DVC training pipeline with full tracking."""
-        try:
-            logger.info("Starting DVC-managed training pipeline...")
-            
-            # 1. Generate pre-training fingerprint
-            pre_fingerprint = self.generate_training_fingerprint()
-            logger.info(f"Training ID: {pre_fingerprint['training_id']}")
-            
-            
-            # 2. Run DVC pipeline
-            logger.info("Executing DVC training pipeline...")
-            result = subprocess.run(
-                ["dvc", "repro", "-f"], 
-                capture_output=True, text=True, cwd=self.workspace
-            )
-            
-            if result.returncode != 0:
-                logger.error(f"DVC pipeline failed: {result.stderr}")
-                raise Exception(f"Training pipeline failed: {result.stderr}")
-            
-            logger.info("DVC pipeline completed successfully")
-            
-            # 3. Push artifacts to remote storage
-            logger.info("Pushing artifacts to DVC remote...")
-            subprocess.run(["dvc", "push"], check=True, cwd=self.workspace)
-            logger.info("Artifacts pushed to remote storage")
-            
-            # 4. Generate post-training fingerprint
-            post_fingerprint = self.generate_training_fingerprint()
-            
-            # 5. Store complete training metadata
-            training_metadata = {
-                "pre_training": pre_fingerprint,
-                "post_training": post_fingerprint,
-                "training_output": result.stdout,
-                "dvc_pipeline_status": self.get_dvc_data_fingerprints(),
-                "reproduction_commands": self.generate_reproduction_commands(post_fingerprint)
-            }
-            
-            # 6. Upload metadata and pipeline config to S3
-            self.store_training_metadata(training_metadata)
-            self.upload_pipeline_configuration()
-            
-            return training_metadata
-            
-        except Exception as e:
-            logger.error(f"Training with DVC failed: {e}")
-            raise
+    def run_training_with_dvc(self):
+            """
+            Execute DVC training pipeline, stream its output, and store metadata.
+            This is a generator function that yields log lines.
+            """
+            try:
+                logger.info("Starting DVC-managed training pipeline...")
+                
+                pre_fingerprint = self.generate_training_fingerprint()
+                logger.info(f"Training ID: {pre_fingerprint['training_id']}")
+                yield f"Training ID: {pre_fingerprint['training_id']}"
+                
+                logger.info("Executing DVC training pipeline...")
+                yield "Executing DVC training pipeline..."
+
+                # 1. Run DVC repro and stream/capture output
+                dvc_output_lines = []
+                process = subprocess.Popen(
+                    ["dvc", "repro", "-f"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    cwd=self.workspace,
+                    bufsize=1
+                )
+                for line in iter(process.stdout.readline, ''):
+                    clean_line = line.strip()
+                    dvc_output_lines.append(clean_line) # Capture line
+                    yield clean_line                    # Stream line
+
+                process.wait()
+                if process.returncode != 0:
+                    raise Exception(f"DVC pipeline failed with exit code {process.returncode}")
+
+                yield "DVC pipeline completed successfully."
+                
+                # 2. Run DVC push and stream/capture output
+                yield "Pushing artifacts to DVC remote..."
+                push_process = subprocess.Popen(
+                    ["dvc", "push"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    cwd=self.workspace,
+                    bufsize=1
+                )
+                for line in iter(push_process.stdout.readline, ''):
+                    yield line.strip()
+
+                push_process.wait()
+                if push_process.returncode != 0:
+                    raise Exception(f"DVC push failed with exit code {push_process.returncode}")
+                
+                yield "Artifacts pushed to remote storage."
+
+                # 3. Perform post-run tasks silently
+                post_fingerprint = self.generate_training_fingerprint()
+                
+                training_output_str = "\n".join(dvc_output_lines)
+                training_metadata = {
+                    "pre_training": pre_fingerprint,
+                    "post_training": post_fingerprint,
+                    "training_output": training_output_str, # Use the captured output
+                    "dvc_pipeline_status": self.get_dvc_data_fingerprints(),
+                    "reproduction_commands": self.generate_reproduction_commands(post_fingerprint)
+                }
+                
+                self.store_training_metadata(training_metadata)
+                self.upload_pipeline_configuration()
+                
+                # As a generator, this function does not return a value.
+                # Its job is to yield logs and perform actions.
+
+            except Exception as e:
+                error_msg = f"Training with DVC failed: {e}"
+                logger.error(error_msg)
+                yield error_msg
+                raise
     
     def generate_reproduction_commands(self, fingerprint: Dict[str, Any]) -> Dict[str, str]:
         """Generate exact commands needed to reproduce this training."""

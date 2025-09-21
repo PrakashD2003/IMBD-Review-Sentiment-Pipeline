@@ -12,7 +12,7 @@ x-common-env: &common-env
 services:
   # 1. Add a dedicated Dask scheduler service
   scheduler:
-    image: prakash3112/imdb-project-repo:training-service-image
+    image: prakash3112/imdb-project-repo:training-service-image-v1
     container_name: dask-scheduler
     command: dask-scheduler
     environment:
@@ -25,7 +25,7 @@ services:
 
   # 2. Add one or more Dask worker services
   worker:
-    image: prakash3112/imdb-project-repo:training-service-image
+    image: prakash3112/imdb-project-repo:training-service-image-v1
     command: dask-worker scheduler:8786
     depends_on:
       - scheduler
@@ -42,7 +42,7 @@ services:
 
   # The Training Service runs the DVC pipeline.
   training:
-    image: prakash3112/imdb-project-repo:training-service-image
+    image: prakash3112/imdb-project-repo:training-service-image-v1
     container_name: training-service
     <<: *common-env
     # Add environment variable to point to the scheduler
@@ -66,7 +66,7 @@ services:
 
   # The Prediction Service serves the trained model for inference.
   prediction:
-    image: prakash3112/imdb-project-repo:prediction-service-image
+    image: prakash3112/imdb-project-repo:prediction-service-image-v1
     container_name: prediction-service
     <<: *common-env
     # Add environment variable to point to the scheduler

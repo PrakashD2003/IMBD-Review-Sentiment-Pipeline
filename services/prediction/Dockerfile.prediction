@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc build-essen
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies into an isolated virtual environment
+COPY common-requirements.txt .
 COPY requirements-prediction.txt .
 RUN python -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir -r requirements-prediction.txt

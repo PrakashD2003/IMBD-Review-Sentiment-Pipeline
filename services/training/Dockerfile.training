@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python dependencies into an isolated virtual environment.
 # This keeps the global Python environment clean and ensures dependency isolation.
+COPY common-requirements.txt .
 COPY requirements-training.txt .
 RUN python -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir -r requirements-training.txt

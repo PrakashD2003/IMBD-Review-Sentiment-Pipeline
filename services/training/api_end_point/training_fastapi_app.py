@@ -186,43 +186,21 @@ def stream_training_logs():
     """
     Stream real-time logs from run_training_with_dvc as Server-Sent Events (SSE).
     """
-
     def event_stream():
-        log_stream = io.StringIO()
-
-        # Attach a temporary log handler that writes logs into StringIO
-        handler = logging.StreamHandler(log_stream)
-        handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        handler.setFormatter(formatter)
-        logger = logging.getLogger()   # root logger
-        logger.addHandler(handler)
-
         try:
-            yield "data: Starting DVC-managed training pipeline...\n\n"
-
-            # Redirect stdout/stderr from anything inside training (subprocess calls, prints, etc.)
-            with redirect_stdout(log_stream), redirect_stderr(log_stream):
-                metadata = training_manager.run_training_with_dvc()
-
-            # Flush out remaining logs
-            log_stream.seek(0)
-            for line in log_stream:
-                yield f"data: {line.strip()}\n\n"
-
-            yield "data: Training finished successfully\n\n"
-            yield f"data: Metadata: {json.dumps(metadata)}\n\n"
+            # Loop through the generator from the training manager and yield each line
+            for log_line in training_manager.run_training_with_dvc():
+                yield f"data: {log_line}\n\n"
+            
+            # Send a final event to signal the end of the stream
+            yield "event: end\ndata: done\n\n"
+        except Exception as e:
+            # If any exception occurs during the process, send it as an error event
+            error_message = str(e).replace('\n', ' ')
+            yield f"data: error: Training pipeline failed: {error_message}\n\n"
             yield "event: end\ndata: done\n\n"
 
-        except Exception as e:
-            yield f"data: error: {str(e)}\n\n"
-
-        finally:
-            logger.removeHandler(handler)
-            log_stream.close()
-
     return StreamingResponse(event_stream(), media_type="text/event-stream")
-
 
 
 @app.post("/reproduce/{training_id}")
