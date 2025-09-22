@@ -38,7 +38,9 @@ logger = configure_logger(
 # Precompile regex patterns and resources at module level
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
 PUNCT_PATTERN = re.compile(r"[^\w\s]")
-STOPWORDS = set(stopwords.words('english'))
+# Keep most stopwords, but exclude common negation words
+negation_words = {"not", "no", "never", "none", "nor", "don't", "doesn't", "didn't", "couldn't", "won't", "wouldn't", "isn't", "aren't"}
+STOPWORDS = set(stopwords.words('english')) - negation_words
 LEMMATIZER = WordNetLemmatizer()
 
 

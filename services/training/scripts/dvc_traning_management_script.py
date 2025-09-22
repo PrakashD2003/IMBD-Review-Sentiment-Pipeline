@@ -217,7 +217,7 @@ class ProductionDVCTrainingManager:
                 # 1. Run DVC repro and stream/capture output
                 dvc_output_lines = []
                 process = subprocess.Popen(
-                    ["dvc", "repro", "-f"],
+                    ["dvc", "repro", "-f", "-v"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
@@ -255,6 +255,7 @@ class ProductionDVCTrainingManager:
                 yield "Artifacts pushed to remote storage."
 
                 # 3. Perform post-run tasks silently
+                yield "Finalizing training metadata..."
                 post_fingerprint = self.generate_training_fingerprint()
                 
                 training_output_str = "\n".join(dvc_output_lines)
@@ -265,9 +266,13 @@ class ProductionDVCTrainingManager:
                     "dvc_pipeline_status": self.get_dvc_data_fingerprints(),
                     "reproduction_commands": self.generate_reproduction_commands(post_fingerprint)
                 }
-                
+                logger.info("Training metadata: %s", training_metadata)
                 self.store_training_metadata(training_metadata)
+                yield "Training metadata stored successfully."
+                yield "Uploading pipeline configuration..."
                 self.upload_pipeline_configuration()
+                yield "Pipeline configuration uploaded successfully."
+                yield "Training process completed."
                 
                 # As a generator, this function does not return a value.
                 # Its job is to yield logs and perform actions.
