@@ -1,8 +1,7 @@
 """Low-latency prediction pipeline for single record inference."""
 
+import logging
 import pandas as pd
-
-from pathlib import Path
 
 from common.utils.mlflow_utils import configure_mlflow,  get_latest_model
 from services.prediction.entity.config_entity import PredictionPipelineConfig
@@ -12,14 +11,9 @@ from common.utils.main_utils import load_params
 from services.prediction.support_scripts.Data_Preprocesser import preprocess_data 
 from common.constants import PARAM_FILE_PATH
 
-module_name = Path(__file__).stem
-logger = configure_logger(
-    logger_name=module_name,
-    level="DEBUG",
-    to_console=True,
-    to_file=True,
-    log_file_name=module_name,
-)
+
+# This logger will automatically inherit the configuration from the FastAPI app
+logger = logging.getLogger(__name__)
 
 
 

@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant Dev as Developer
+    participant Git as GitHub Repo
+    participant CI as CI Pipeline (Tests)
+    participant CD as CD Pipeline (DVC & Promote)
+    participant MLflow as MLflow Registry
+    participant Deploy as Deployment
+
+    Dev->>Git: Pushes code changes
+    Git->>CI: Triggers pipeline
+    CI-->>Git: Reports test status (Pass/Fail)
+    
+    alt Tests Pass
+        Git->>CD: Triggers deployment pipeline
+        CD->>CD: Runs `dvc repro`
+        CD->>MLflow: New model registered to "Staging"
+        
+        CD->>CD: Runs `promote_model.py`
+        CD->>MLflow: Fetches Staging & Production models
+        MLflow-->>CD: Returns models and metrics
+        
+        alt Staging model is better
+            CD->>MLflow: Promote Staging model to Production
+            CD->>Deploy: Trigger prediction service update
+        else Staging model is not better
+            CD->>CD: End pipeline (No deployment)
+        end
+    end

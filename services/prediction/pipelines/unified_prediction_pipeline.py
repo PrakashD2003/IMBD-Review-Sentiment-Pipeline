@@ -1,4 +1,6 @@
 """Unified pipeline capable of both batch and single-record predictions."""
+
+import logging
 import lightgbm as lgb
 from sklearn.linear_model import LogisticRegression
 
@@ -16,14 +18,9 @@ from common.utils.main_utils import load_params
 from services.prediction.support_scripts.Data_Preprocesser import preprocess_data
 from common.constants import DASK_SCHEDULER_ADDRESS, PARAM_FILE_PATH, N_PARTITIONS
 
-module_name = Path(__file__).stem
-logger = configure_logger(
-    logger_name=module_name,
-    level="DEBUG",
-    to_console=True,
-    to_file=True,
-    log_file_name=module_name,
-)
+
+# This logger will automatically inherit the configuration from the FastAPI app
+logger = logging.getLogger(__name__)
 
 def start_client() -> Client:
     """Start or connect to a Dask scheduler for batch inference."""

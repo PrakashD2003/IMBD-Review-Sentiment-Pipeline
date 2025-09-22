@@ -1,0 +1,40 @@
+graph TD
+    subgraph "Docker Environment (Components on 'imdb-network')"
+        
+        subgraph "Dask Client"
+            Client["<b>Training Service Container</b><br/>(FastAPI App)<br/>Initiates computation and builds the task graph."]
+        end
+
+        subgraph "Dask Cluster"
+            Scheduler["<b>Dask Scheduler Container</b><br</i><br/>Manages workers and coordinates task execution."]
+            Worker1["<b>Dask Worker 1 Container</b><b</i><br/>Executes the actual Python code for each task."]
+            WorkerN["<b>Dask Worker N Container</b><br/>..."]
+            Dashboard["<a href='http://localhost:8787' target='_blank'><b>Dask Dashboard (Port 8787)</a><br/>Web UI for monitoring the cluster."]
+        end
+
+        SharedVolume[("<b>Shared Filesystem</b><br/<br/>Provides a common space for artifacts and data.")]
+
+        Client -- "1.Connect to Scheduler (TCP:8786)" --> Scheduler
+        Scheduler -.-> Worker1
+        Scheduler -.-> WorkerN
+        
+        Client -- "2.Submit Task Graph (e.g., ddf.to_parquet)" --> Scheduler
+        Scheduler -- "3.Assign Tasks to Workers" --> Worker1
+        Scheduler -- "3.Assign Tasks to Workers" --> WorkerN
+
+        Client -- "Reads/Writes files directly<br/>(e.g., os.makedirs)" --> SharedVolume
+        Worker1 -- "4.Executes Task<br/>(Reads/writes data from/to the volume)" --> SharedVolume
+        WorkerN -- "4.Executes Task<br/>(Reads/writes data from/to the volume)" --> SharedVolume
+        
+        Worker1 -.->|5.Report Task Result| Scheduler
+        WorkerN -.->|5.Report Task Result| Scheduler
+
+        Scheduler -.->|6.Report Final Status to Client| Client
+        Scheduler -- "Serves UI" --> Dashboard
+    end
+
+    style Client fill:#D6EAF8,stroke:#333,stroke-width:2px
+    style Scheduler fill:#D5F5E3,stroke:#333,stroke-width:2px
+    style Worker1 fill:#FEF9E7,stroke:#333,stroke-width:2px
+    style WorkerN fill:#FEF9E7,stroke:#333,stroke-width:2px
+    style SharedVolume fill:#FADBD8,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5

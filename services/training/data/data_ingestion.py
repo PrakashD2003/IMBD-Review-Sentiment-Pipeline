@@ -4,6 +4,7 @@ This module downloads raw review data from S3, filters valid sentiment
 labels, creates train/test splits using Dask, and persists the results.
 """
 
+import logging
 import dask.dataframe as dd
 from pathlib import Path
 from dask_ml.model_selection import train_test_split as dask_train_test_split
@@ -17,15 +18,8 @@ from common.utils.main_utils import load_params, save_dask_dataframe_as_parquet
 from common.constants import PARAM_FILE_PATH, SINGLE_FILE
 
 
-module_name = Path(__file__).stem
-
-logger = configure_logger(
-    logger_name=module_name,
-    level="DEBUG",
-    to_console=True,
-    to_file=True,
-    log_file_name=module_name
-)
+# This logger will automatically inherit the configuration from the entrypoint
+logger = logging.getLogger(__name__)
 
 
 class DataIngestion:

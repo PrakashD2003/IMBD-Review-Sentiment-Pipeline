@@ -3,6 +3,7 @@
 Provides TF-IDF vectorization and dataset transformation helpers using Dask.
 """
 
+import logging
 import pandas as pd
 import dask.dataframe as ddf
 from pathlib import Path
@@ -16,12 +17,9 @@ from services.training.entity.config_entity import FeatureEngineeringConfig
 from services.training.entity.artifact_entity import DataPreprocessingArtifact, FeatureEngineeringArtifact
 from common.constants import PARAM_FILE_PATH
 
-module_name = Path(__file__).stem
 
-logger = configure_logger(logger_name=module_name, 
-                          level="DEBUG", to_console=True, 
-                          to_file=True, 
-                          log_file_name=module_name)
+# This logger will automatically inherit the configuration from the entrypoint
+logger = logging.getLogger(__name__)
 
 
 # Top-level partition transform function for TF-IDF

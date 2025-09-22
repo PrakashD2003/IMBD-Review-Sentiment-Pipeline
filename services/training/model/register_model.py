@@ -1,4 +1,6 @@
 """Utilities for registering trained models and vectorizers with MLflow."""
+
+import logging
 import lightgbm as lgb
 from sklearn.linear_model import LogisticRegression
 
@@ -16,10 +18,8 @@ from common.constants import PARAM_FILE_PATH
 
 module_name = Path(__file__).stem
 
-logger = configure_logger(logger_name=module_name, 
-                          level="DEBUG", to_console=True, 
-                          to_file=True, 
-                          log_file_name=module_name)
+# This logger will automatically inherit the configuration from the entrypoint
+logger = logging.getLogger(__name__)
 
 class ModelRegistry:
     """

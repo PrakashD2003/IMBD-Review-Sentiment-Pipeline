@@ -5,6 +5,7 @@ to prepare text data for feature extraction using Dask.
 """
 
 import re
+import logging
 import pandas as pd
 from pathlib import Path
 
@@ -25,15 +26,9 @@ nltk.download("stopwords", quiet=True)
 # Force WordNet to load once, setting up its private internals
 _warmup = WordNetLemmatizer().lemmatize("test")
 
-module_name = Path(__file__).stem
 
-logger = configure_logger(
-    logger_name=module_name,
-    level="DEBUG",
-    to_console=True,
-    to_file=True,
-    log_file_name=module_name
-)
+# This logger will automatically inherit the configuration from the FastAPI app
+logger = logging.getLogger(__name__)
 
 # Precompile regex patterns and resources at module level
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
@@ -49,6 +44,7 @@ def preprocess_text(text: str) -> str:
     Clean a single text string by:
       - Removing URLs
       - Removing punctuation
+      - Handling negations by adding a _NOT suffix
       - Tokenizing and lowercasing
       - Removing numeric tokens
       - Removing English stopwords
@@ -60,9 +56,27 @@ def preprocess_text(text: str) -> str:
     cleaned = PUNCT_PATTERN.sub("", cleaned)
     # Split into tokens
     tokens = cleaned.split()
+    # Negation Handling Logic ---
+    negation_flags = ["not", "no", "never", "n't"]
+    negated = False
+    processed_tokens = []
+    for token in tokens:
+        if token in negation_flags:
+            negated = True
+            processed_tokens.append(token)
+            continue
+        
+        if negated:
+            processed_tokens.append(token + "_NOT")
+            # This example negates only the next word. You could extend this.
+            negated = False 
+        else:
+            processed_tokens.append(token)
+    tokens = processed_tokens
+
     # Lowercase and remove digits
     tokens = [w.lower() for w in tokens if not w.isdigit()]
-    # Remove stopwords
+    # Remove stopwords (it won't remove "not" due to our custom STOPWORDS set)
     tokens = [w for w in tokens if w not in STOPWORDS]
     # Lemmatize
     tokens = [LEMMATIZER.lemmatize(w) for w in tokens]

@@ -1,12 +1,24 @@
 """Command-line interface for running individual pipeline steps with Dask."""
-
+import logging
 import argparse
 from dask.distributed import Client, LocalCluster
 
 from common.constants import DASK_SCHEDULER_ADDRESS, DASK_WORKERS, DASK_THREADS, DASK_MEMORY_LIMIT
+from common.logger import configure_logger
 
+# ==============================================================================
+# Central Logging Configuration for the Entire Pipeline
+# This is called ONLY ONCE when the script starts.
+# ==============================================================================
+configure_logger(
+    logger_name="training_pipeline", # This will configure the parent logger
+    level="DEBUG",
+    log_file_name="training-pipeline.log"
+)
+# ==============================================================================
 
-
+# Now, getting a logger for this specific module, which will inherit the config
+logger = logging.getLogger(__name__)
 
 def start_client():
     """Bring up a Dask client (EKS scheduler or local)."""

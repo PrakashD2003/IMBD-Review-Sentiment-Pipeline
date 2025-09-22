@@ -8,6 +8,7 @@ distributed batch inference.
 
 import os
 import uvicorn
+import logging
 import pandas as pd      
 from pathlib import Path
 from typing import List
@@ -26,14 +27,17 @@ from services.prediction.pipelines.unified_prediction_pipeline import UnifiedPre
 from common.logger import configure_logger
 from common.constants import DASK_SCHEDULER_ADDRESS
 
-module_name = Path(__file__).stem
-logger = configure_logger(
-    logger_name=module_name,
+# Configure the logger ONCE for the entire prediction service
+configure_logger(
+    logger_name="prediction-service",
     level="DEBUG",
     to_console=True,
     to_file=True,
-    log_file_name=module_name,
+    log_file_name="prediction-service.log",
 )
+
+# Now, any module can get this logger. For this file, we get it here:
+logger = logging.getLogger(__name__)
 
 def start_client() -> Client:
     """

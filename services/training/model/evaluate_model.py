@@ -1,5 +1,6 @@
 """Model evaluation utilities for computing and logging metrics."""
 
+import logging
 import dask.dataframe as ddf
 from pathlib import Path
 from numpy import ndarray
@@ -13,12 +14,9 @@ from services.training.entity.config_entity import ModelEvaluationConfig
 from services.training.entity.artifact_entity import ModelTrainerArtifact, ModelEvaluationArtifact, FeatureEngineeringArtifact
 from common.constants import PARAM_FILE_PATH
 
-module_name = Path(__file__).stem
 
-logger = configure_logger(logger_name=module_name, 
-                          level="DEBUG", to_console=True, 
-                          to_file=True, 
-                          log_file_name=module_name)
+# This logger will automatically inherit the configuration from the entrypoint
+logger = logging.getLogger(__name__)
 
 class ModelEvaluation:
     """

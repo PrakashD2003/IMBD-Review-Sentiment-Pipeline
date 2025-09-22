@@ -1,0 +1,13 @@
+graph TD
+    subgraph Docker Container
+        A[FastAPI Service] --> B{Logger}
+        B --> C[JSON Log File e.g., service.log]
+    end
+    
+    D[CloudWatch Agent] -- Tails --> C
+    D -- Ships Logs --> E[AWS CloudWatch]
+    
+    subgraph AWS Cloud
+        E --> F[Logs Insights & Search]
+        E --> G[Dashboards & Alarms]
+    end

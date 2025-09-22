@@ -5,6 +5,7 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from pathlib import Path
 from colorlog import ColoredFormatter
+from pythonjsonlogger import jsonlogger
 # from src.logger.global_logging import LOG_SESSION_TIME
 
 LOG_DIR = "logs"
@@ -14,9 +15,9 @@ BACKUP_COUNT = 3
 def configure_logger(logger_name:str, level:str = "INFO", 
                      to_console: bool = True, 
                      to_file: bool = True, 
-                     log_file_name: str = None)-> logging.Logger:
+                     log_file_name: str = "service.log")-> logging.Logger:
     """
-    Configure a logger with optional console and rotating file handlers.
+    Configure a logger with optional console and rotating file handlers to output structured JSON logs.
 
     :param logger_name: Name of the logger (e.g., __name__)
     :param level: Logging level ('DEBUG', 'INFO', etc.)
@@ -25,7 +26,7 @@ def configure_logger(logger_name:str, level:str = "INFO",
     :param log_file_name: Custom log file name (defaults to timestamp)
     :return: Configured Logger instance
     """
-    # Determine project root (2 levels up: src/logger -> src -> project root)
+    # Determine project root (2 levels up: common/logger -> common -> project root)
     base_dir = Path(__file__).resolve().parents[2]
     log_dir_path = base_dir / LOG_DIR 
     log_dir_path.mkdir(parents=True, exist_ok=True)
@@ -40,8 +41,8 @@ def configure_logger(logger_name:str, level:str = "INFO",
     log_level = getattr(logging, level.upper(),logging.INFO)
     logger.setLevel(level=log_level)
 
-    # Define Colored Log Formatter
-    formatter = ColoredFormatter(    
+    # Define Colored Log Formatter for better console readability
+    console_formatter = ColoredFormatter(    
         "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         log_colors={
             "DEBUG": "cyan",
@@ -51,27 +52,27 @@ def configure_logger(logger_name:str, level:str = "INFO",
             "CRITICAL": "bold_red"
         })
     
-    # Setup Console Handeler
+    # Setup Console Handler
     if to_console:
-        console_handeler = logging.StreamHandler()
-        console_handeler.setLevel(log_level)
-        console_handeler.setFormatter(formatter)
-        logger.addHandler(console_handeler)
-    
-    # Setup Rotating File Handeler
-    if to_file:
-        if log_file_name is None:
-            log_file_name = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-        log_file_path = log_dir_path / f"{log_file_name}.log"
-        file_handeler = RotatingFileHandler(
-            filename= str(log_file_path),
-            encoding= "utf-8",
-            maxBytes= MAX_LOG_SIZE,
-            backupCount= BACKUP_COUNT
-        )
-        file_handeler.setLevel(log_level)
-        file_handeler.setFormatter(formatter)
-        logger.addHandler(file_handeler)
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
+
+    # Define a standard JSON log format
+    # This format is excellent for services like CloudWatch
+    json_formatter = jsonlogger.JsonFormatter(
+        '%(asctime)s %(name)s %(levelname)s %(message)s'
+    )
+    # Setup Rotating File Handler for JSON logs
+    log_file_path = log_dir_path / log_file_name
+    file_handler = RotatingFileHandler(
+        filename=str(log_file_path),
+        encoding="utf-8",
+        maxBytes=MAX_LOG_SIZE,
+        backupCount=BACKUP_COUNT
+    )
+    file_handler.setFormatter(json_formatter)
+    logger.addHandler(file_handler)
     
     # Prevent log propagation to root logger
     logger.propagate = False

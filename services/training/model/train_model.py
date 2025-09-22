@@ -1,8 +1,7 @@
 """Model training utilities leveraging Dask and scikit-learn."""
-
+import logging
 import joblib
 import dask.dataframe as ddf
-from pathlib import Path
 import lightgbm as lgb
 from sklearn.linear_model import LogisticRegression
 
@@ -13,12 +12,9 @@ from services.training.entity.config_entity import ModelTrainerConfig
 from services.training.entity.artifact_entity import FeatureEngineeringArtifact, ModelTrainerArtifact
 from common.constants import PARAM_FILE_PATH
 
-module_name = Path(__file__).stem
 
-logger = configure_logger(logger_name=module_name, 
-                          level="DEBUG", to_console=True, 
-                          to_file=True, 
-                          log_file_name=module_name)
+# This logger will automatically inherit the configuration from the entrypoint
+logger = logging.getLogger(__name__)
 
 class ModelTrainer:
     """
@@ -77,18 +73,24 @@ class ModelTrainer:
             logger.info(f"Selected model for training: {model_name_to_train}")
             logger.info(f"Training {model_name_to_train}...")
 
+            # if model_name_to_train == "LogisticRegression":
+            #     model_params = self.params["model_training"]["logistic_regression"]
+            #     model = LogisticRegression(**model_params)
+                
+            #     logger.debug("Bringing data into memory for scikit-learn...")
+            #     # Use .compute() to get NumPy arrays from Dask arrays
+            #     X_train_mem = x_train.compute()
+            #     y_train_mem = y_train.compute()
+                
+            #     logger.debug("Fitting LogisticRegression model in-memory...")
+            #     # Fit directly using scikit-learn, no Dask backend needed
+            #     model.fit(X=X_train_mem, y=y_train_mem)
             if model_name_to_train == "LogisticRegression":
                 model_params = self.params["model_training"]["logistic_regression"]
                 model = LogisticRegression(**model_params)
-                
-                logger.debug("Bringing data into memory for scikit-learn...")
-                # Use .compute() to get NumPy arrays from Dask arrays
-                X_train_mem = x_train.compute()
-                y_train_mem = y_train.compute()
-                
-                logger.debug("Fitting LogisticRegression model in-memory...")
-                # Fit directly using scikit-learn, no Dask backend needed
-                model.fit(X=X_train_mem, y=y_train_mem)
+                logger.debug("Fitting LogisticRegression model in parallel over Dask with Joblib...")
+                with joblib.parallel_backend("dask"):
+                    model.fit(X=x_train, y=y_train)
 
             elif model_name_to_train == "LightGBM":
                 lgbm_params = self.params["model_training"]["lightgbm"]

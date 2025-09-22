@@ -4,6 +4,7 @@ import os
 import gc
 import time
 import json
+import logging
 import dask.dataframe as ddf
 from dask.diagnostics import ProgressBar
 import yaml
@@ -14,14 +15,8 @@ from typing import Optional
 import logging
 import pandas as pd
 
-# 1) Configuring the module‐level default logger exactly once, on import
-DEFAULT_LOGGER = configure_logger(
-    logger_name=__name__,
-    level="DEBUG",
-    to_console=True,
-    to_file=True,
-    log_file_name=__name__  
-)
+# This will now inherit the configuration from the service that imports it.
+DEFAULT_LOGGER = logging.getLogger(__name__)
 
 
 def load_params(params_path: str, logger: Optional[logging.Logger] = None) -> dict:

@@ -18,11 +18,11 @@ from common.logger import configure_logger
 from common.constants import DASK_SCHEDULER_ADDRESS
 
 logger = configure_logger(
-    logger_name="training_service",
+    logger_name="training-service",
     level="DEBUG",
     to_console=True,
     to_file=True,
-    log_file_name="training_service",
+    log_file_name="training-service.log",
 )
 
 

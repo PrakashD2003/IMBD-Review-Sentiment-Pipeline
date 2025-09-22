@@ -26,7 +26,7 @@ feature_engineering:
 
 model_training:
   # Select the model to train. Options: "LogisticRegression" or "LightGBM"
-  model_to_use: "LightGBM"
+  model_to_use: "LogisticRegression"
 
   # --- Model Hyperparameters ---
 

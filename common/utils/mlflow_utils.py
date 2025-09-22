@@ -9,13 +9,9 @@ from common.logger import configure_logger
 from common.exception import DetailedException
 from common.constants import MLFLOW_TRACKING_URI
 
-DEFAULT_LOGGER = configure_logger(
-    logger_name=__name__,
-    level="DEBUG",
-    to_console=True,
-    to_file=True,
-    log_file_name=__name__
-)
+
+# This will also inherit the central logger configuration.
+DEFAULT_LOGGER = logging.getLogger(__name__)
 
 def _ensure_non_interactive_auth(logger: logging.Logger) -> None:
     """
