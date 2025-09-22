@@ -1,4 +1,6 @@
 """Utilities for registering trained models and vectorizers with MLflow."""
+import lightgbm as lgb
+from sklearn.linear_model import LogisticRegression
 
 import mlflow
 import mlflow.sklearn
@@ -104,65 +106,75 @@ class ModelRegistry:
                 logger.info("Entered 'initiate_model_registration' method of 'ModelRegistry' class")
                 logger.info("\n" + "-" * 80)
                 logger.info("Starting Model Registry Component...")
-
-                logger.debug("Loading Performance Metrics from: %s", self.model_evaluation_artifact.performance_metrics_file_path)
-                performance_metrics = load_json(file_path=self.model_evaluation_artifact.performance_metrics_file_path, logger=logger)
-                if performance_metrics is None:
-                    raise RuntimeError("Loaded performance_metrics is None")
+                
+                # --- Log Metrics ---
+                logger.debug("Loading Performance Metrics from: %s", self.model_evaluation_artifact.performance_metrics_file_save_path)
+                performance_metrics = load_json(file_path=self.model_evaluation_artifact.performance_metrics_file_save_path, logger=logger)
                 logger.info("Performance Metrics Loaded Successfully.")
-
-                logger.debug("Logging Performance Metrics: '%s' in Mlflow experiment: %s", performance_metrics, run.info.run_id )
+                logger.debug("Logging Performance Metrics in Mlflow experiment: %s", run.info.run_id)
                 mlflow.log_metrics(performance_metrics)
-                logger.debug("Successfully Logged Performance Metrics in Mlflow experiment.")
+                logger.debug("Successfully Logged Performance Metrics.")
 
-
-
-                logger.debug("Loading Model from: %s",self.model_trainer_artifact.trained_model_obj_path)
-                model = load_object(file_path=self.model_trainer_artifact.trained_model_obj_path,
-                                                logger=logger)
+                # --- Handle Model ---
+                logger.debug("Loading Model from: %s", self.model_trainer_artifact.trained_model_obj_path)
+                model = load_object(file_path=self.model_trainer_artifact.trained_model_obj_path, logger=logger)
                 logger.info("Model Successfully Loaded.")
 
-                logger.debug("Logging Model in Mlflow experiment: %s",run.info.run_id )
-                logger.info("Classifier expects %d features", model.coef_.shape[1])
+                # Conditionally log feature info to prevent AttributeError
+                if isinstance(model, LogisticRegression):
+                    logger.info("Classifier expects %d features", model.coef_.shape[1])
+                elif isinstance(model, lgb.LGBMClassifier):
+                    logger.info("Classifier was trained on %d features", model.n_features_in_)
+
+                logger.debug("Logging Model in Mlflow experiment: %s", run.info.run_id)
                 mlflow.sklearn.log_model(model, artifact_path=self.model_registry_config.mlflow_model_artifact_path)
                 logger.debug("Successfully Logged Model in Mlflow experiment.")
-                model_params = self.params.get("Model_Params", {})
-                if model_params is None:
-                    raise RuntimeError("Loaded model_params is None")
-                logger.debug("Logging Model Parameters: '%s' in Mlflow experiment: %s", model_params, run.info.run_id )
+
+                # Conditionally log correct model parameters
+                model_name_trained = self.params.get("model_training", {}).get("model_to_use")
+                model_params = {}
+                if model_name_trained == "LogisticRegression":
+                    model_params = self.params.get("model_training", {}).get("logistic_regression", {})
+                elif model_name_trained == "LightGBM":
+                    model_params = self.params.get("model_training", {}).get("lightgbm", {})
+                logger.debug("Logging Model Parameters for '%s'", model_name_trained)
                 mlflow.log_params(model_params)
-                logger.debug("Successfully Logged Model Parameters in Mlflow experiment.")
+                logger.debug("Successfully Logged Model Parameters.")
 
                 logger.debug("Registering Model in Mlflow Registry...")
-                self.register_model(run_id=run.info.run_id, 
-                                    artifact_path=self.model_registry_config.mlflow_model_artifact_path,
-                                    model_name=self.model_registry_config.mlflow_model_name, 
-                                    stage=self.model_registry_config.mlflow_model_stage)
+                self.register_model(
+                    run_id=run.info.run_id, 
+                    artifact_path=self.model_registry_config.mlflow_model_artifact_path,
+                    model_name=self.model_registry_config.mlflow_model_name, 
+                    stage=self.model_registry_config.mlflow_model_stage
+                )
                 logger.debug("Successfully Registered Model in Mlflow Registry.")
 
-                logger.debug("Loading Vectorizer from: %s",self.feature_engineering_artifact.vectorizer_obj_file_path)
-                vectorizer = load_object(file_path=self.feature_engineering_artifact.vectorizer_obj_file_path,
-                                                logger=logger)
+                # --- Handle Vectorizer ---
+                logger.debug("Loading Vectorizer from: %s", self.feature_engineering_artifact.vectorizer_obj_file_path)
+                vectorizer = load_object(file_path=self.feature_engineering_artifact.vectorizer_obj_file_path, logger=logger)
                 logger.info("Vectorizer Successfully Loaded.")
                 
-                logger.debug("Logging Vectorizer in Mlflow experiment: %s",run.info.run_id )
+                logger.debug("Logging Vectorizer in Mlflow experiment: %s", run.info.run_id)
                 logger.info("Vectorizer vocab size: %d", len(vectorizer.vocabulary_))
                 mlflow.sklearn.log_model(vectorizer, artifact_path=self.model_registry_config.mlflow_vectorizer_artifact_path)
                 logger.debug("Successfully Logged Vectorizer in Mlflow experiment.")
                 
-                vectorizer_params = self.params.get("TF-IDF_Params", {})
-                if vectorizer_params is None:
-                    raise RuntimeError("Loaded vectorizer_params is None")
-                logger.debug("Logging Vectorizer Parameters: '%s' in Mlflow experiment: %s", vectorizer_params, run.info.run_id )
+                # Log vectorizer parameters from correct path
+                vectorizer_params = self.params.get("feature_engineering", {}).get("tfidf", {})
+                logger.debug("Logging Vectorizer Parameters")
                 mlflow.log_params(vectorizer_params)
-                logger.debug("Successfully Logged Vectorizer Parameters in Mlflow experiment.")
+                logger.debug("Successfully Logged Vectorizer Parameters.")
 
                 logger.debug("Registering Vectorizer in Mlflow Registry...")
-                self.register_model(run_id=run.info.run_id, 
-                                    artifact_path= self.model_registry_config.mlflow_vectorizer_artifact_path,
-                                    model_name=self.model_registry_config.mlflow_vectorizer_name, 
-                                    stage=self.model_registry_config.mlflow_model_stage)
+                self.register_model(
+                    run_id=run.info.run_id, 
+                    artifact_path=self.model_registry_config.mlflow_vectorizer_artifact_path,
+                    model_name=self.model_registry_config.mlflow_vectorizer_name, 
+                    stage=self.model_registry_config.mlflow_model_stage
+                )
                 logger.debug("Successfully Registered Vectorizer in Mlflow Registry.")
+
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
                 

@@ -141,7 +141,7 @@ class ModelEvaluation:
             logger.info("Model Successfully Loaded.")
 
             logger.debug("Initiating Model Evaluation...")
-            performance_metrics = self.evaluate_model(model=model, test_ddf=test_ddf, target_col=self.params.get("Target_Col"))
+            performance_metrics = self.evaluate_model(model=model, test_ddf=test_ddf, target_col=self.params["global_params"]["target_column"])
             logger.info("Model Evaluation Completed.")
 
             logger.debug("Saving Performance Metrics at: %s", self.model_evaluation_config.performance_metrics_file_save_path)

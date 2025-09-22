@@ -152,15 +152,15 @@ class DataPreprocessing:
             logger.debug("Loading Training Data...")
             training_data = load_parquet_as_dask_dataframe(self.data_ingestion_artifact.training_data_file_path, logger=logger)
 
-            logger.debug("Performing Preprocessing on '%s' column of training data...", self.params["data_preprocessing_params"]["text_column_for_preprocessing"])
-            training_data = self.preprocess_data(dataframe=training_data, col=self.params["data_preprocessing_params"]["text_column_for_preprocessing"])
+            logger.debug("Performing Preprocessing on '%s' column of training data...", self.params["global_params"]["text_column"])
+            training_data = self.preprocess_data(dataframe=training_data, col=self.params["global_params"]["text_column"])
             logger.info("Successfully Preprocesses training data.")
 
             logger.debug("Loading Test Data...")
             test_data = load_parquet_as_dask_dataframe(self.data_ingestion_artifact.test_data_file_path, logger=logger)
 
-            logger.debug("Performing Preprocessing on '%s' column of test data...", self.params["data_preprocessing_params"]["text_column_for_preprocessing"])
-            test_data = self.preprocess_data(dataframe=test_data, col=self.params["data_preprocessing_params"]["text_column_for_preprocessing"])
+            logger.debug("Performing Preprocessing on '%s' column of test data...", self.params["global_params"]["text_column"])
+            test_data = self.preprocess_data(dataframe=test_data, col=self.params["global_params"]["text_column"])
             logger.info("Successfully Preprocesses test data.")
 
             logger.debug("Saving Preprocessed data...")

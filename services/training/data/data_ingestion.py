@@ -7,6 +7,7 @@ labels, creates train/test splits using Dask, and persists the results.
 import dask.dataframe as dd
 from pathlib import Path
 from dask_ml.model_selection import train_test_split as dask_train_test_split
+from sklearn.model_selection import train_test_split
 from common.logger import configure_logger
 from common.exception import DetailedException
 from services.training.entity.config_entity import DataIngestionConfig
@@ -129,12 +130,11 @@ class DataIngestion:
                 test_size, random_state, shuffle
             )
             
-            train_ddf, test_ddf = dask_train_test_split(
-                ddf_clean,
-                test_size=test_size,
-                random_state=random_state,
-                shuffle=shuffle
-            )
+            train_ddf, test_ddf = dask_train_test_split(ddf_raw,
+                                    test_size=self.params["data_ingestion"]["test_size"],
+                                    shuffle=self.params["data_ingestion"]["shuffle"],
+                                    random_state=self.params["global_params"]["random_state"])
+            
             logger.info(
                 "Created train/test Dask DataFrames: 'train_partitions=%s', 'test_partitions=%s'",
                 train_ddf.npartitions, test_ddf.npartitions

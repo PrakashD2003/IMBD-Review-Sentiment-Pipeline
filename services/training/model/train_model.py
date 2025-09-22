@@ -3,6 +3,7 @@
 import joblib
 import dask.dataframe as ddf
 from pathlib import Path
+import lightgbm as lgb
 from sklearn.linear_model import LogisticRegression
 
 from common.logger import configure_logger
@@ -45,21 +46,24 @@ class ModelTrainer:
         except Exception as e:
             raise DetailedException(exc=e, logger=logger) from e
 
-    def train_model(self, train_ddf:ddf.DataFrame, target_col:str)-> LogisticRegression:
+    def train_model(self, train_ddf:ddf.DataFrame, target_col:str)-> LogisticRegression | lgb.LGBMClassifier:
         """
-        Fit a scikit‐learn LogisticRegression on Dask‐backed data in parallel.
+        Fit a classifier model (e.g., LogisticRegression, LightGBM) on Dask-backed data.
+
+        The specific model and its parameters are loaded from `params.yaml`. This function
+        handles the parallel training of the selected model using its appropriate
+        Dask integration (Joblib for scikit-learn, native for LightGBM).
 
         Steps:
           1. Persist the Dask DataFrame to materialize partitions.
-          2. Convert to Dask Arrays: X (all features) and y (the target column).
-             └─ sklearn only accepts NumPy arrays (or array‐like), so we must convert.
-          3. Initialize sklearn.LogisticRegression(**Model_Params).
-          4. Call clf.fit(X, y) within joblib.parallel_backend("dask") to distribute work.
+          2. Convert to Dask Arrays: X (features) and y (target).
+          3. Initialize the specified model from `params.yaml`.
+          4. Call model.fit(X, y) using the correct parallel backend.
 
         :param train_ddf: Dask DataFrame containing feature columns + `target_col`.
         :param target_col: Name of the column in train_ddf to use as the label.
-        :return: A fitted sklearn.linear_model.LogisticRegression instance.
-        :raises DetailedException: If any step (persist, split, init, fit) fails.
+        :return: A fitted classifier instance (either LogisticRegression or LGBMClassifier).
+        :raises DetailedException: If any step fails.
         """
         try:
             logger.info("Entered 'train_model' function of 'ModelTrainer' class.")
@@ -69,17 +73,29 @@ class ModelTrainer:
             y_train = train_ddf[target_col].to_dask_array(lengths=True)
             x_train = train_ddf.drop(columns=[target_col]).to_dask_array(lengths=True)
             
-            model_params = self.params.get("Model_Params", {})
-            logger.debug("Initializing 'LogisticRegression' with Params: %s", model_params)
-            clf = LogisticRegression(**model_params)
-            logger.info("'LogisticRegression' object initialized successfully")
+            model_name_to_train = self.params["model_training"]["model_to_use"]
+            logger.info(f"Selected model for training: {model_name_to_train}")
+            logger.info(f"Training {model_name_to_train}...")
 
-            logger.debug("Fitting model in parallel over Dask...")
-            with joblib.parallel_backend("dask"):
-                clf.fit(X=x_train, y=y_train)
+            if model_name_to_train == "LogisticRegression":
+                model_params = self.params["model_training"]["logistic_regression"]
+                model = LogisticRegression(**model_params)
+                logger.debug("Fitting LogisticRegression model in parallel over Dask with Joblib...")
+                with joblib.parallel_backend("dask"):
+                    model.fit(X=x_train, y=y_train)
+
+            elif model_name_to_train == "LightGBM":
+                lgbm_params = self.params["model_training"]["lightgbm"]
+                model = lgb.LGBMClassifier(**lgbm_params)
+                logger.debug("Fitting LightGBM model with its native Dask integration...")
+                model.fit(X=x_train, y=y_train)
+                
+            else:
+                raise ValueError(f"Unknown model_name '{model_name_to_train}' in params.yaml")
+
             logger.info("Model trained successfully.")
 
-            return clf
+            return model
         except Exception as e:
             raise DetailedException(exc=e, logger=logger)
         
@@ -103,7 +119,7 @@ class ModelTrainer:
                                             logger=logger)
             
             logger.info("Training Data Shape (before split): %s", train_ddf.shape)
-            clf = self.train_model(train_ddf=train_ddf, target_col=self.params.get("Target_Col"))
+            clf = self.train_model(train_ddf=train_ddf, target_col=self.params["global_params"]["target_column"])
 
             logger.debug("Saving Trained Model Object at: %s", self.model_trainer_config.trained_model_obj_path)
             save_object(file_path=self.model_trainer_config.trained_model_obj_path,

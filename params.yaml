@@ -1,34 +1,45 @@
-### Data Ingestion ###
-data_ingestion_params:
-  test_size: 0.20
+# ==============================================================================
+# Global Parameters
+# ==============================================================================
+# Parameters shared across multiple pipeline stages.
+global_params:
+  target_column: "sentiment"
+  text_column: "review"
   random_state: 42
+
+# ==============================================================================
+# Stage-Specific Parameters
+# ==============================================================================
+# Parameters are nested under keys that correspond to the stages in dvc.yaml.
+
+data_ingestion:
+  test_size: 0.20
   shuffle: true
 
-### Data Preprocessing ###
-data_preprocessing_params:
-  text_column_for_preprocessing: "review"
+feature_engineering:
+  # Parameters for the TfidfVectorizer
+  tfidf:
+    max_df: 0.9
+    max_features: 10000
+    min_df: 2
+    ngram_range: [1, 2] # Use both unigrams and bigrams
 
-### Feature Engineering ###
-feature_engineering_params:
-  text_column_for_engineering: "review"
+model_training:
+  # Select the model to train. Options: "LogisticRegression" or "LightGBM"
+  model_to_use: "LightGBM"
 
-TF-IDF_Params:
-  max_df: 0.9
-  max_features: 10000
-  min_df: 2
-  ngram_range: [1,2] # Unigrams and Bigrams
+  # --- Model Hyperparameters ---
 
-### Model Training ###
-Target_Col: "sentiment"
+  # Parameters for Logistic Regression
+  logistic_regression:
+    C: 0.1          # Inverse of regularization strength
+    penalty: "l2"     # Regularization norm
+    solver: "saga"    # Solver that supports elasticnet or l2
+    max_iter: 300     # Maximum iterations for convergence
+    tol: 0.001
 
-Model_Params:
-  C: 0.1                # Inverse of regularization strength
-  penalty: "l2"         # Regularization norm
-  solver: "saga"        # Solver that supports elasticnet or l2
-  max_iter: 300         # Maximum iterations for convergence
-  tol: 0.001
-  random_state: 42      # Seed for reproducibility
-
-### Prediction Pipeline ###
-prediction_pipeline_params:
-  text_column_for_preprocessing: "review"
+  # Parameters for LightGBM
+  lightgbm:
+    n_estimators: 200
+    learning_rate: 0.1
+    num_leaves: 31

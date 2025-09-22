@@ -106,7 +106,7 @@ class FeatureEngineering:
 
             # Build vocabulary on the full column in memory
             full_series: pd.Series = train_ddf[column].compute()
-            tfidf_params = self.params.get("TF-IDF_Params", {})
+            tfidf_params = self.params["feature_engineering"]["tfidf"]
             # Convert list->tuple 
             rng = tfidf_params.get("ngram_range")
             if isinstance(rng, list):
@@ -175,14 +175,14 @@ class FeatureEngineering:
                                             logger=logger)
             logger.info("Test Data Successfully Loaded.")
 
-            tfidf_params = self.params.get("TF-IDF_Params", {})
+            tfidf_params = self.params["feature_engineering"]["tfidf"]
             logger.info(
                 "Vectorizing training and test data using Tf-IDF vectorizer with params: %s",
                 tfidf_params
             )
             vectorized_train_ddf, vectorized_test_ddf, vectorizer_obj = self.vectorize_tfidf(train_ddf=train_ddf,
                                                                        test_ddf=test_ddf,
-                                                                       column=self.params["feature_engineering_params"]["text_column_for_engineering"]
+                                                                       column=self.params["global_params"]["text_column"],
                                                                        )
             logger.info("Successfully Vectorized training and test data.")
             
