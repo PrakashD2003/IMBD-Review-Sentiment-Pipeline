@@ -1,4 +1,6 @@
 """Unified pipeline capable of both batch and single-record predictions."""
+import lightgbm as lgb
+from sklearn.linear_model import LogisticRegression
 
 import pandas as pd
 import dask.dataframe as dd
@@ -93,7 +95,13 @@ class UnifiedPredictionPipeline:
                 logger=logger
             )
             logger.info("Vectorizer vocab size: %d", len(self.vectorizer.vocabulary_))
-            logger.info("Classifier expects %d features", self.model.coef_.shape[1])
+            # Conditionally log feature info based on model type
+            if isinstance(self.model, LogisticRegression):
+                logger.info("Classifier expects %d features", self.model.coef_.shape[1])
+            elif isinstance(self.model, lgb.LGBMClassifier):
+                logger.info("Classifier was trained on %d features", self.model.n_features_in_)
+
+            logger.info("'UnifiedPredictionPipeline' class configured successfully.")
             
             logger.info("'UnifiedPredictionPipeline' class configured successfully.")
         except Exception as e:
@@ -127,7 +135,7 @@ class UnifiedPredictionPipeline:
         """
         try:
             logger.info("Running single inference...")
-            text_col = self.params["prediction_pipeline_params"]["text_column_for_preprocessing"]
+            text_col = self.params["global_params"]["text_column"]
             cleaned = preprocess_data(df, col=text_col)
             X = self.vectorizer.transform(cleaned[text_col])
             y = self.model.predict(X).astype(int)
@@ -162,7 +170,7 @@ class UnifiedPredictionPipeline:
         """
         try:
             logger.info("Running batch inference...")
-            text_col = self.params["prediction_pipeline_params"]["text_column_for_preprocessing"]
+            text_col = self.params["global_params"]["text_column"]
             ddf = dd.from_pandas(df, npartitions=N_PARTITIONS)
 
             batch_func = partial(

@@ -55,9 +55,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH"
 
-# Install git, which is a runtime dependency for DVC operations like 'dvc repro'.
+# Install runtime dependencies: git for DVC and libgomp1 for LightGBM.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
+      libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the virtual environment and application code from the 'build' stage.

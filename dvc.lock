@@ -6,12 +6,12 @@ stages:
     deps:
     - path: params.yaml
       hash: md5
-      md5: 8efd10f94fc4a8b482842fe6b3cd33e9
-      size: 1424
+      md5: 911251216ef39be25531d08f2dd15950
+      size: 1760
     - path: services/training/data/data_ingestion.py
       hash: md5
-      md5: 0a60179f91d3f302c357333b8aeb939a
-      size: 8411
+      md5: 7c3c86ecc2d4b68f6d7c7a81b8d701bf
+      size: 8413
     - path: services/training/pipelines/training_pipeline.py
       hash: md5
       md5: 9b16d6a6d17b2c0ff41f2af10be9637d
@@ -24,13 +24,13 @@ stages:
     outs:
     - path: artifacts/data/interim/test
       hash: md5
-      md5: 3b2026a9b732a963d8004b8809b71f4e.dir
-      size: 8647593
+      md5: 5a5071302e770a3e581ddad199f98def.dir
+      size: 8647725
       nfiles: 3
     - path: artifacts/data/interim/train
       hash: md5
-      md5: 960ecfa1a5e9032479380c86c12a21a6.dir
-      size: 34064520
+      md5: c509e4acab63abc5c4062438a611e8eb.dir
+      size: 34064652
       nfiles: 3
     - path: artifacts/data/raw
       hash: md5
@@ -47,18 +47,18 @@ stages:
       size: 2187
     - path: artifacts/data/interim/test
       hash: md5
-      md5: 3b2026a9b732a963d8004b8809b71f4e.dir
-      size: 8647593
+      md5: 5a5071302e770a3e581ddad199f98def.dir
+      size: 8647725
       nfiles: 3
     - path: artifacts/data/interim/train
       hash: md5
-      md5: 960ecfa1a5e9032479380c86c12a21a6.dir
-      size: 34064520
+      md5: c509e4acab63abc5c4062438a611e8eb.dir
+      size: 34064652
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: 8efd10f94fc4a8b482842fe6b3cd33e9
-      size: 1424
+      md5: 911251216ef39be25531d08f2dd15950
+      size: 1760
     - path: services/training/data/data_preprocessing.py
       hash: md5
       md5: 457b22044bdf209e7d82fa83c7073d82
@@ -69,13 +69,13 @@ stages:
     outs:
     - path: artifacts/data/processed/preprocessed_test_data
       hash: md5
-      md5: 7fb9b40179db17d9d7023e5ae3addd44.dir
-      size: 5403693
+      md5: 833b5dd4879b34c83c96c9c817b0b4e5.dir
+      size: 5403825
       nfiles: 3
     - path: artifacts/data/processed/preprocessed_training_data
       hash: md5
-      md5: 80835500f0980b0c7178883056140b40.dir
-      size: 21252858
+      md5: c8c93c3fd1d44fc0711833e426f5e98c.dir
+      size: 21252990
       nfiles: 3
   feature_engineering:
     cmd: python -m services.training.pipelines.training_pipeline --step fe
@@ -96,36 +96,37 @@ stages:
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: f283567de49e34c09f898ba7e8ed9f58
-      size: 2696
+      md5: 911251216ef39be25531d08f2dd15950
+      size: 1760
     - path: services/training/features/feature_engineering.py
       hash: md5
-      md5: 0f0378021a5851684069f233805d7778
-      size: 11399
+      md5: 6d0a4d11747cb2aa58afdb9b7859c0bc
+      size: 11385
     params:
       params.yaml:
-        TF-IDF_Params.max_df: 0.9
-        TF-IDF_Params.max_features: 10000
-        TF-IDF_Params.min_df: 2
-        TF-IDF_Params.ngram_range:
-        - 1
-        - 2
-        feature_engineering_params.text_column_for_engineering: review
+        feature_engineering.tfidf:
+          max_df: 0.9
+          max_features: 10000
+          min_df: 2
+          ngram_range:
+          - 1
+          - 3
+        global_params.text_column: review
     outs:
     - path: artifacts/data/feature_engineered/feature_engineered_test_data
       hash: md5
-      md5: c7d0a8e5556dc3a57fb0764e45d508da.dir
-      size: 31748280
+      md5: 528d0d2f2bcae6be36997825e2ddaccb.dir
+      size: 31783230
       nfiles: 3
     - path: artifacts/data/feature_engineered/feature_engineered_training_data
       hash: md5
-      md5: f430a3ee41ee03e5a59060bdbbcbc390.dir
-      size: 72920873
+      md5: 40c07c4a5594ba69ee927592d2992073.dir
+      size: 73033165
       nfiles: 3
     - path: artifacts/saved_models/vectorizer
       hash: md5
-      md5: 5258ac9400c89c4a8b33c9c18bb46fb4.dir
-      size: 379066
+      md5: bd4019db669a942343431216f1f4c387.dir
+      size: 379507
       nfiles: 1
   model_training:
     cmd: python -m services.training.pipelines.training_pipeline --step train
@@ -136,31 +137,39 @@ stages:
       size: 2187
     - path: artifacts/data/feature_engineered/feature_engineered_training_data
       hash: md5
-      md5: f430a3ee41ee03e5a59060bdbbcbc390.dir
-      size: 72920873
+      md5: 40c07c4a5594ba69ee927592d2992073.dir
+      size: 73033165
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: f283567de49e34c09f898ba7e8ed9f58
-      size: 2696
+      md5: 911251216ef39be25531d08f2dd15950
+      size: 1760
     - path: services/training/model/train_model.py
       hash: md5
-      md5: 70e29118ad8d881c9b8a18c6b38641ee
-      size: 6896
+      md5: d201256daa8c0f444adc1ad17d583a79
+      size: 7235
     params:
       params.yaml:
-        Model_Params.C: 0.1
-        Model_Params.max_iter: 300
-        Model_Params.penalty: l2
-        Model_Params.random_state: 42
-        Model_Params.solver: saga
-        Model_Params.tol: 0.001
-        Target_Col: sentiment
+        global_params.target_column: sentiment
+        model_training.lightgbm:
+          n_estimators: 200
+          learning_rate: 0.1
+          num_leaves: 31
+          reg_alpha: 0.1
+          reg_lambda: 0.1
+        model_training.logistic_regression:
+          C: 0.05
+          penalty: l2
+          solver: saga
+          max_iter: 300
+          tol: 0.001
+          n_jobs: -1
+        model_training.model_to_use: LightGBM
     outs:
     - path: artifacts/saved_models/model
       hash: md5
-      md5: 9691321c8cb9e8bc55869b02325618d8.dir
-      size: 1104374
+      md5: 2a953420e253a117fc6757cb4e41770f.dir
+      size: 1103784
       nfiles: 1
   model_evaluation:
     cmd: python -m services.training.pipelines.training_pipeline --step evaluate
@@ -171,24 +180,24 @@ stages:
       size: 2187
     - path: artifacts/data/feature_engineered/feature_engineered_test_data
       hash: md5
-      md5: c7d0a8e5556dc3a57fb0764e45d508da.dir
-      size: 31748280
+      md5: 528d0d2f2bcae6be36997825e2ddaccb.dir
+      size: 31783230
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: f283567de49e34c09f898ba7e8ed9f58
-      size: 2696
+      md5: 911251216ef39be25531d08f2dd15950
+      size: 1760
     - path: services/training/model/evaluate_model.py
       hash: md5
-      md5: 21398bebe52f74ca23c766e89230a3b1
-      size: 8301
+      md5: d9cfde77b571d5a41d58fc5c8b0d6ccf
+      size: 8317
     params:
       params.yaml:
-        Target_Col: sentiment
+        global_params.target_column: sentiment
     outs:
     - path: artifacts/reports/performance_metrics.json
       hash: md5
-      md5: cb0b22e2c727753edee25ad1a2b634fa
+      md5: 806e1b1f0ea9b18784c3f9367dcda2a0
       size: 150
   model_registry:
     cmd: python -m services.training.pipelines.training_pipeline --step register
@@ -199,23 +208,23 @@ stages:
       size: 2187
     - path: artifacts/reports/performance_metrics.json
       hash: md5
-      md5: 61c7d24c054bb5ace741dafb7683f2a8
+      md5: 806e1b1f0ea9b18784c3f9367dcda2a0
       size: 150
     - path: artifacts/saved_models/model
       hash: md5
-      md5: f3bc99559f9bc3643c8dfae347d755cf.dir
-      size: 40770
+      md5: 2a953420e253a117fc6757cb4e41770f.dir
+      size: 1103784
       nfiles: 1
     - path: artifacts/saved_models/vectorizer
       hash: md5
-      md5: 85089f0ebd97355a8cf5b5f4f9793d60.dir
-      size: 186402
+      md5: bd4019db669a942343431216f1f4c387.dir
+      size: 379507
       nfiles: 1
     - path: params.yaml
       hash: md5
-      md5: 870138b4c90a3cd54448e4656049ca2e
-      size: 892
+      md5: 911251216ef39be25531d08f2dd15950
+      size: 1760
     - path: services/training/model/register_model.py
       hash: md5
-      md5: 2b7af0e0d612e3599378059c5665367e
-      size: 9971
+      md5: 73231bca51172b219e0be7150aafbcc8
+      size: 10393

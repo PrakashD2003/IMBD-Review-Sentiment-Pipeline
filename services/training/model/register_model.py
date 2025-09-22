@@ -94,22 +94,22 @@ class ModelRegistry:
         - Logs associated parameters.
         - Registers the model and vectorizer in MLflow Model Registry.
         """
-        try:
-            configure_mlflow(
-            mlflow_uri=self.model_registry_config.mlflow_uri,
-            dagshub_repo_owner_name=self.model_registry_config.dagshub_repo_owner_name,
-            dagshub_repo_name=self.model_registry_config.dagshub_repo_name,
-            experiment_name=self.model_registry_config.experiment_name,
-            logger=logger,
-            )
-            with mlflow.start_run() as run:
+        configure_mlflow(
+        mlflow_uri=self.model_registry_config.mlflow_uri,
+        dagshub_repo_owner_name=self.model_registry_config.dagshub_repo_owner_name,
+        dagshub_repo_name=self.model_registry_config.dagshub_repo_name,
+        experiment_name=self.model_registry_config.experiment_name,
+        logger=logger,
+        )
+        with mlflow.start_run() as run:
+            try:
                 logger.info("Entered 'initiate_model_registration' method of 'ModelRegistry' class")
                 logger.info("\n" + "-" * 80)
                 logger.info("Starting Model Registry Component...")
                 
                 # --- Log Metrics ---
-                logger.debug("Loading Performance Metrics from: %s", self.model_evaluation_artifact.performance_metrics_file_save_path)
-                performance_metrics = load_json(file_path=self.model_evaluation_artifact.performance_metrics_file_save_path, logger=logger)
+                logger.debug("Loading Performance Metrics from: %s", self.model_evaluation_artifact.performance_metrics_file_path)
+                performance_metrics = load_json(file_path=self.model_evaluation_artifact.performance_metrics_file_path, logger=logger)
                 logger.info("Performance Metrics Loaded Successfully.")
                 logger.debug("Logging Performance Metrics in Mlflow experiment: %s", run.info.run_id)
                 mlflow.log_metrics(performance_metrics)
@@ -139,6 +139,7 @@ class ModelRegistry:
                     model_params = self.params.get("model_training", {}).get("lightgbm", {})
                 logger.debug("Logging Model Parameters for '%s'", model_name_trained)
                 mlflow.log_params(model_params)
+                mlflow.log_param("model_type", model_name_trained)
                 logger.debug("Successfully Logged Model Parameters.")
 
                 logger.debug("Registering Model in Mlflow Registry...")
@@ -175,8 +176,8 @@ class ModelRegistry:
                 )
                 logger.debug("Successfully Registered Vectorizer in Mlflow Registry.")
 
-        except Exception as e:
-            raise DetailedException(exc=e, logger=logger) from e
+            except Exception as e:
+                raise DetailedException(exc=e, logger=logger) from e
                 
 
 if __name__ == "__main__":

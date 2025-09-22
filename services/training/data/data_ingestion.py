@@ -130,7 +130,7 @@ class DataIngestion:
                 test_size, random_state, shuffle
             )
             
-            train_ddf, test_ddf = dask_train_test_split(ddf_raw,
+            train_ddf, test_ddf = dask_train_test_split(ddf_clean,
                                     test_size=self.params["data_ingestion"]["test_size"],
                                     shuffle=self.params["data_ingestion"]["shuffle"],
                                     random_state=self.params["global_params"]["random_state"])

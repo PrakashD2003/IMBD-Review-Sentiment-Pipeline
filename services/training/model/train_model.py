@@ -80,9 +80,15 @@ class ModelTrainer:
             if model_name_to_train == "LogisticRegression":
                 model_params = self.params["model_training"]["logistic_regression"]
                 model = LogisticRegression(**model_params)
-                logger.debug("Fitting LogisticRegression model in parallel over Dask with Joblib...")
-                with joblib.parallel_backend("dask"):
-                    model.fit(X=x_train, y=y_train)
+                
+                logger.debug("Bringing data into memory for scikit-learn...")
+                # Use .compute() to get NumPy arrays from Dask arrays
+                X_train_mem = x_train.compute()
+                y_train_mem = y_train.compute()
+                
+                logger.debug("Fitting LogisticRegression model in-memory...")
+                # Fit directly using scikit-learn, no Dask backend needed
+                model.fit(X=X_train_mem, y=y_train_mem)
 
             elif model_name_to_train == "LightGBM":
                 lgbm_params = self.params["model_training"]["lightgbm"]
