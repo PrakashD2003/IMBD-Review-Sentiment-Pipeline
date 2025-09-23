@@ -4,15 +4,13 @@ import json
 import pytest
 from unittest.mock import patch, MagicMock, create_autospec
 from fastapi.testclient import TestClient
-import subprocess
 
 # Ensure the app can be imported
 from services.training.api_end_point.training_fastapi_app import app, training_manager
 from services.training.scripts.dvc_traning_management_script import ProductionDVCTrainingManager
 
-# Use a pytest fixture to initialize the TestClient once per module
-@pytest.fixture(scope="module")
-def client(monkeypatch): # Add monkeypatch
+@pytest.fixture(scope="function") 
+def client(monkeypatch):
     """Provides a FastAPI TestClient for making requests to the app."""
     # Set required environment variables for the test session
     monkeypatch.setenv("DVC_S3_BUCKET", "test-bucket")

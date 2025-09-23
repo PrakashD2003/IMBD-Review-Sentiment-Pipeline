@@ -16,19 +16,20 @@ def mock_env(monkeypatch):
     monkeypatch.setenv("PIPELINE_VERSION", "v1.0")
     monkeypatch.setenv("COMMIT_SHA", "test_sha")
 
+
 @pytest.fixture
-def manager(tmp_path): # Use pytest's tmp_path fixture
-    """
-    Provides an instance of ProductionDVCTrainingManager with mocked dependencies.
-    """
-    with patch('subprocess.run'), \
-         patch('boto3.client'), \
-         patch('pathlib.Path.exists', return_value=False), \
-         patch('os.chdir'), \
-         patch('services.training.scripts.dvc_traning_management_script.ProductionDVCTrainingManager.workspace', tmp_path): # Mock the workspace path
+def manager(tmp_path):
+    """Provides an instance of ProductionDVCTrainingManager with mocked dependencies."""
+    # Mock the Path object used inside the class's __init__
+    with patch('services.training.scripts.dvc_traning_management_script.Path') as mock_path, \
+         patch('subprocess.run'), \
+         patch('boto3.client'):
+        
+        # Make the mocked Path object return our temporary test path
+        mock_path.return_value = tmp_path
         
         manager_instance = ProductionDVCTrainingManager()
-        yield manager_instance, MagicMock() # Return mocks if needed by tests
+        yield manager_instance, MagicMock()
 
 # --- Test Cases ---
 

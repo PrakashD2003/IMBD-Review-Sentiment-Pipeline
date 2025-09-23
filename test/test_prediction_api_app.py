@@ -10,10 +10,20 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 
+
 @pytest.fixture(scope="module")
-def client():
+def client(monkeypatch):  # <-- Add monkeypatch
     """Provides a FastAPI TestClient for the prediction app."""
-    with TestClient(app) as c:
+    # Set dummy env vars required by the UnifiedPredictionPipeline on startup
+    monkeypatch.setenv("MODEL_NAME", "test-model")
+    monkeypatch.setenv("VECTORIZER_NAME", "test-vectorizer")
+    monkeypatch.setenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000") # Can be any valid URI
+    monkeypatch.setenv("DAGSHUB_REPO_OWNER", "test")
+    monkeypatch.setenv("DAGSHUB_REPO_NAME", "test")
+
+    # Mock the MLflow call to prevent actual network requests
+    with patch('common.utils.mlflow_utils.get_latest_model', return_value=MagicMock()), \
+         TestClient(app) as c:
         yield c
         
 class DummyPipeline:
