@@ -1,3 +1,4 @@
+import pytest
 import sys
 from pathlib import Path
 import pandas as pd
@@ -79,3 +80,16 @@ def test_batch_predict_endpoint():
                 )
     assert resp.status_code == 200
     assert resp.json() == {'predictions': [0, 0, 0]}
+
+@pytest.mark.parametrize("invalid_payload", [
+    {"reviews": []},                   # Empty list
+    {"reviews": "not a list"},         # Wrong data type
+    {"data": ["a review"]},            # Wrong key
+    {},                                # Empty JSON
+])
+def test_predict_endpoint_invalid_input(client, invalid_payload):
+    """
+    Tests that the /predict endpoint returns a 422 error for invalid payloads.
+    """
+    response = client.post('/predict', json=invalid_payload)
+    assert response.status_code == 422

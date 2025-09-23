@@ -1,0 +1,76 @@
+name: Continuous Integration Pipeline
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  
+jobs:
+  lint-and-test:
+    name: 🐍 Lint & Test Python Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          python-version: "3.11" # Match the version used in your Dockerfiles
+      
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Lint with flake8
+        run: |
+          # Check for major errors first (syntax errors, undefined names)
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Enforce style guide without failing the build
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=79 --statistics
+      
+      - name: Run Unit Tests
+        run: pytest
+      
+      - name: Verify DVC Pipeline Integrity
+        run: |
+          pip install dvc # Install dvc for the DAG check
+          dvc dag # This command checks if the pipeline graph is valid
+          dvc repro --dry-run # This command checks if the pipeline can be reproduced without actually running it
+
+  build-docker-images:
+    name: 🐳 Build Docker Images
+    runs-on: ubuntu-latest
+    needs: lint-and-test # This job will only run if the lint-and-test job succeeds
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx for advanced features
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Training Service Image
+        run: |
+          docker build -t imdb-training-service:ci-build \
+            -f services/training/Dockerfile.training .
+
+      - name: Build Prediction Service Image
+        run: |
+          docker build -t imdb-prediction-service:ci-build \
+            -f services/prediction/Dockerfile.prediction .
+      
+      - name: Build Frontend Service Image
+        run: |
+          docker build -t imdb-frontend-service:ci-build \
+            -f imdb-frontend/Dockerfile.frontend ./imdb-frontend
+      
+      - name: Build Dask Service Image
+        run: |
+          docker build -t imdb-dask-service:ci-build \
+            -f Dockerfile.dask .
