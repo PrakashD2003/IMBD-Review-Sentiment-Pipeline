@@ -11,6 +11,8 @@ jobs:
   lint-and-test:
     name: 🐍 Lint & Test Python Code
     runs-on: ubuntu-latest
+    env: 
+      PYTHONPATH: . # Ensure the root directory is in PYTHONPATH
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
