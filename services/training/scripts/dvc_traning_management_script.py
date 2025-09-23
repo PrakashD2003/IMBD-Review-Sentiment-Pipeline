@@ -238,28 +238,28 @@ class ProductionDVCTrainingManager:
 
                 # Update progress based on stage completion
                 for line in iter(process.stdout.readline, ''):
-                clean_line = line.strip()
-                dvc_output_lines.append(clean_line) # capture output stream
-                yield {'type': 'log', 'data': clean_line} # stream output
-                                  
-                 # Check for stage completion to update progress
-                if "Running stage" in clean_line:
-                    stage_name = clean_line.split("'")[1]
-                    if stage_name in stages:
-                        # Find the index of the current stage to report progress
-                        try:
-                            current_idx = stages.index(stage_name)
-                            completed_stages = current_idx
-                            yield {
-                                'type': 'progress',
-                                'data': {
-                                    'current_stage': f"Running: {stage_name}",
-                                    'completed': completed_stages,
-                                    'total': total_stages
+                    clean_line = line.strip()
+                    dvc_output_lines.append(clean_line) # capture output stream
+                    yield {'type': 'log', 'data': clean_line} # stream output
+                                    
+                    # Check for stage completion to update progress
+                    if "Running stage" in clean_line:
+                        stage_name = clean_line.split("'")[1]
+                        if stage_name in stages:
+                            # Find the index of the current stage to report progress
+                            try:
+                                current_idx = stages.index(stage_name)
+                                completed_stages = current_idx
+                                yield {
+                                    'type': 'progress',
+                                    'data': {
+                                        'current_stage': f"Running: {stage_name}",
+                                        'completed': completed_stages,
+                                        'total': total_stages
+                                    }
                                 }
-                            }
-                        except ValueError:
-                            pass # Not a stage we are tracking
+                            except ValueError:
+                                pass # Not a stage we are tracking
 
                 process.wait()
                 if process.returncode != 0:
@@ -291,7 +291,8 @@ class ProductionDVCTrainingManager:
                     bufsize=1
                 )
                 for line in iter(push_process.stdout.readline, ''):
-                    yield line.strip()
+                    # --- THIS IS THE LINE TO CHANGE ---
+                    yield {'type': 'log', 'data': line.strip()} # Wrap the string in our dictionary format
 
                 push_process.wait()
                 if push_process.returncode != 0:
@@ -313,15 +314,15 @@ class ProductionDVCTrainingManager:
                     "reproduction_commands": self.generate_reproduction_commands(post_fingerprint)
                 }
                 logger.info("Training metadata: %s", training_metadata)
-                yield "Storing training metadata..."
+                yield {'type': 'log', 'data': "Storing training metadata..."}
                 logger.info("Storing training metadata...")
                 self.store_training_metadata(training_metadata)
-                yield "Training metadata stored successfully."
+                yield {'type': 'log', 'data': "Training metadata stored successfully."}
                 logger.info("Training metadata stored successfully.")
-                yield "Uploading pipeline configuration..."
+                yield {'type': 'log', 'data': "Uploading pipeline configuration..."}
                 logger.info("Uploading pipeline configuration...")
                 self.upload_pipeline_configuration()
-                yield "Pipeline configuration uploaded successfully."
+                yield {'type': 'log', 'data': "Pipeline configuration uploaded successfully."}
                 logger.info("Pipeline configuration uploaded successfully.")
                 yield {'type': 'log', 'data': "Training process completed."}
                 logger.info("Training process completed.")

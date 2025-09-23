@@ -12,7 +12,7 @@ x-common-env: &common-env
 services:
   # 1. Add a dedicated Dask scheduler service
   scheduler:
-    image: prakash3112/imdb-project-repo:training-service-image-v1
+    image: prakash3112/imdb-project-repo:imdb-dask-cluster
     container_name: dask-scheduler
     command: dask-scheduler
     environment:
@@ -25,7 +25,7 @@ services:
 
   # 2. Add one or more Dask worker services
   worker:
-    image: prakash3112/imdb-project-repo:training-service-image-v1
+    image: prakash3112/imdb-project-repo:imdb-dask-cluster
     command: dask-worker scheduler:8786
     depends_on:
       - scheduler
@@ -87,7 +87,7 @@ services:
       - imdb-network
   # The Frontend Service provides the user interface.
   frontend:
-    image: prakash3112/imdb-project-repo:frontend-image
+    image: prakash3112/imdb-project-repo:frontend-image-v1
     container_name: frontend-service
     depends_on:
       - training

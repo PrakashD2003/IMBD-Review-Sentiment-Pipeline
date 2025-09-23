@@ -1,0 +1,65 @@
+# Dockerfile.dask (Multi-stage)
+# A dedicated, minimal image for the Dask Scheduler and Workers.
+
+# ==============================================================================
+# Stage 1: Build Stage
+# This stage uses a Node.js image to build the static React application.
+# It installs dependencies and runs the Vite build script. The output of this
+# stage is the 'dist' directory containing optimized static assets.
+# ==============================================================================
+FROM python:3.12-slim AS build
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# 1. Install build-time dependencies (compilers, etc.)
+# These are necessary for pip to build some packages but are not needed at runtime.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      gcc build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Create a virtual environment and install ALL Python dependencies
+COPY common-requirements.txt requirements-training.txt requirements-prediction.txt ./
+RUN python -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir -r requirements-training.txt \
+ && /opt/venv/bin/pip install --no-cache-dir -r requirements-prediction.txt
+
+# 3. Pre-download NLTK data within the build stage
+RUN /opt/venv/bin/python -m nltk.downloader -d /opt/venv/nltk_data wordnet omw-1.4 stopwords
+
+# 4. Copy application source code
+COPY common/ /app/common/
+COPY services/ /app/services/
+
+# ==============================================================================
+# Stage 2: Runtime Stage
+# This is the final, lean image. It starts from a fresh base and copies only
+# the necessary artifacts from the 'build' stage, leaving behind the build tools.
+# ==============================================================================
+FROM python:3.12-slim AS runtime
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+# 1. Install only RUNTIME system dependencies (git for DVC, libgomp1 for LightGBM)
+# We avoid installing 'build-essential' here to keep the image small.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Copy the pre-built virtual environment (including NLTK data) from the 'build' stage
+COPY --from=build /opt/venv /opt/venv
+
+# 3. Copy the application source code from the 'build' stage
+COPY --from=build /app /app
+
+# 4. Create and switch to a non-root user for security
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
+# NOTE: No CMD or ENTRYPOINT. This will be specified in docker-compose.yaml
