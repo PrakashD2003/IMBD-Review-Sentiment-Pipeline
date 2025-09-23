@@ -116,7 +116,6 @@ def shutdown_event():
 
     Closes the Dask client gracefully to release resources.
     """
-    global client
     if client:
         client.close()
 

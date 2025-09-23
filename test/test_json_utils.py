@@ -1,5 +1,5 @@
 import pytest
-from common.utils.main_utils import save_json, load_json
+from common.utils.main_utils import save_json, load_json, load_params
 
 
 def test_save_and_load_json(tmp_path):
