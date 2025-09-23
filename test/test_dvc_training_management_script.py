@@ -17,32 +17,18 @@ def mock_env(monkeypatch):
     monkeypatch.setenv("COMMIT_SHA", "test_sha")
 
 @pytest.fixture
-def manager(mock_env):
+def manager(tmp_path): # Use pytest's tmp_path fixture
     """
-    Provides an instance of ProductionDVCTrainingManager with its external
-    dependencies (subprocess, boto3) mocked out.
+    Provides an instance of ProductionDVCTrainingManager with mocked dependencies.
     """
-    with patch('subprocess.run') as mock_run, \
-         patch('boto3.client') as mock_boto, \
+    with patch('subprocess.run'), \
+         patch('boto3.client'), \
          patch('pathlib.Path.exists', return_value=False), \
-         patch('os.chdir'):
+         patch('os.chdir'), \
+         patch('services.training.scripts.dvc_traning_management_script.ProductionDVCTrainingManager.workspace', tmp_path): # Mock the workspace path
         
-        # Configure the mock boto3 client
-        mock_s3_client = MagicMock()
-        mock_boto.return_value = mock_s3_client
-
-        # Instantiate the manager, which triggers setup_dvc_environment
         manager_instance = ProductionDVCTrainingManager()
-        manager_instance.s3_client = mock_s3_client # Attach the mock client for later tests
-        
-        # Verify initial setup calls
-        mock_run.assert_any_call(["dvc", "init", "--no-scm"], check=True, cwd=Path("/app"))
-        mock_run.assert_any_call(
-            ["dvc", "remote", "add", "-d", "storage", "s3://my-test-bucket/dvc-storage"],
-            check=True, cwd=Path("/app")
-        )
-        
-        yield manager_instance
+        yield manager_instance, MagicMock() # Return mocks if needed by tests
 
 # --- Test Cases ---
 

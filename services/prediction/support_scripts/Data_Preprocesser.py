@@ -43,43 +43,40 @@ def preprocess_text(text: str) -> str:
     Clean a single text string by:
       - Removing URLs
       - Removing punctuation
-      - Handling negations by adding a _NOT suffix
       - Tokenizing and lowercasing
       - Removing numeric tokens
       - Removing English stopwords
+      - Handling negations by adding a _NOT suffix
       - Lemmatizing tokens
     """
-    # Remove URLs
+    # 1. Initial cleaning and tokenization
     cleaned = URL_PATTERN.sub("", text)
-    # Remove punctuation
     cleaned = PUNCT_PATTERN.sub("", cleaned)
-    # Split into tokens
     tokens = cleaned.split()
-    # Negation Handling Logic ---
-    negation_flags = ["not", "no", "never", "n't"]
-    negated = False
+
+    # 2. Lowercase and remove stopwords FIRST
+    tokens = [w.lower() for w in tokens if not w.isdigit()]
+    # This will correctly remove "a" from ["not", "a", "bad", "movie"]
+    tokens = [w for w in tokens if w not in STOPWORDS]
+
+    # 3. NOW apply the more robust negation handling on cleaned tokens
+    negation_flags = {"not", "no", "never", "n't", "isnt", "wasnt", "arent", "werent", "couldnt", "wouldnt", "shouldnt"}
     processed_tokens = []
+    negate_count = 0
     for token in tokens:
-        if token in negation_flags:
-            negated = True
-            processed_tokens.append(token)
-            continue
-        
-        if negated:
+        if negate_count > 0:
             processed_tokens.append(token + "_NOT")
-            # This example negates only the next word. You could extend this.
-            negated = False 
+            negate_count -= 1
         else:
             processed_tokens.append(token)
-    tokens = processed_tokens
 
-    # Lowercase and remove digits
-    tokens = [w.lower() for w in tokens if not w.isdigit()]
-    # Remove stopwords (it won't remove "not" due to our custom STOPWORDS set)
-    tokens = [w for w in tokens if w not in STOPWORDS]
-    # Lemmatize
-    tokens = [LEMMATIZER.lemmatize(w) for w in tokens]
-    return " ".join(tokens)
+        if token in negation_flags:
+            negate_count = 2  # Negate the next 2 words
+
+    # 4. Finally, lemmatize
+    final_tokens = [LEMMATIZER.lemmatize(w) for w in processed_tokens]
+    
+    return " ".join(final_tokens)
 
 
 def preprocess_data(dataframe:ddf.DataFrame, col:str)->ddf.DataFrame:

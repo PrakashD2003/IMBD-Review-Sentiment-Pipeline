@@ -20,9 +20,9 @@ def test_initiate_data_ingestion_saves_artifacts(tmp_path):
     df = pd.DataFrame({"sentiment": ["positive", "negative"], "review": ["a", "b"]})
     ddf = dd.from_pandas(df, npartitions=1)
 
-    with patch('src.data.data_ingestion.S3Connection') as s3_cls, \
-         patch('src.data.data_ingestion.save_dask_dataframe_as_parquet') as save_parquet, \
-         patch('src.data.data_ingestion.dask_train_test_split', return_value=(ddf, ddf)):
+    with patch('services.training.data.data_ingestion.S3Connection') as s3_cls, \
+     patch('services.training.data.data_ingestion.save_dask_dataframe_as_parquet') as save_parquet, \
+     patch('services.training.data.data_ingestion.dask_train_test_split', return_value=(ddf, ddf)):
         s3_instance = s3_cls.return_value
         s3_instance.load_parquet_from_s3_as_dask_dataframe.return_value = ddf
         di = DataIngestion()

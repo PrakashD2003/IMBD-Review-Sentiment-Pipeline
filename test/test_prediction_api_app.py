@@ -2,15 +2,20 @@ import pytest
 import sys
 from pathlib import Path
 import pandas as pd
-from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 from prometheus_client import CollectorRegistry
-
+from starlette.testclient import TestClient
+from services.prediction.api_end_point.prediction_fastapi_app import app
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-from services.prediction.api_end_point.prediction_fastapi_app import app
 
+@pytest.fixture(scope="module")
+def client():
+    """Provides a FastAPI TestClient for the prediction app."""
+    with TestClient(app) as c:
+        yield c
+        
 class DummyPipeline:
     def predict_single(self, df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame({"prediction": [1] * len(df)})

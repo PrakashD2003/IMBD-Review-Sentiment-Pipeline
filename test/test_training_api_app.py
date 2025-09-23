@@ -12,8 +12,14 @@ from services.training.scripts.dvc_traning_management_script import ProductionDV
 
 # Use a pytest fixture to initialize the TestClient once per module
 @pytest.fixture(scope="module")
-def client():
+def client(monkeypatch): # Add monkeypatch
     """Provides a FastAPI TestClient for making requests to the app."""
+    # Set required environment variables for the test session
+    monkeypatch.setenv("DVC_S3_BUCKET", "test-bucket")
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "test")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "test")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+    
     with TestClient(app) as c:
         yield c
 
