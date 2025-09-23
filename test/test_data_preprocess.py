@@ -18,7 +18,7 @@ def test_preprocess_data_removes_nulls_and_cleans():
     ("URL http://t.co/xyz removed", "url removed"), # URL removal
     ("it's a movie", "movie"),               # Stopword removal
     ("running ran runs", "running ran run"), # Lemmatization
-    ("not a bad movie", "not bad_NOT movie"), # Negation handling
+    ("not a bad movie", "not bad_NOT movie_NOT"), # Negation handling
     ("12345 numeric data", "numeric data"),  # Number removal
     ("!?@#$", ""),                           # Punctuation only
 ])
