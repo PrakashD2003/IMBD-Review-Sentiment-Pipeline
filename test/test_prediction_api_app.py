@@ -11,8 +11,8 @@ sys.path.append(str(ROOT))
 
 
 
-@pytest.fixture(scope="module")
-def client(monkeypatch):  # <-- Add monkeypatch
+@pytest.fixture(scope="function") 
+def client(monkeypatch):
     """Provides a FastAPI TestClient for the prediction app."""
     # Set dummy env vars required by the UnifiedPredictionPipeline on startup
     monkeypatch.setenv("MODEL_NAME", "test-model")

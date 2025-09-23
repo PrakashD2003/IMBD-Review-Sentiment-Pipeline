@@ -18,8 +18,11 @@ def mock_env(monkeypatch):
 
 
 @pytest.fixture
-def manager(tmp_path):
+def manager(tmp_path, monkeypatch): # <-- Add monkeypatch here
     """Provides an instance of ProductionDVCTrainingManager with mocked dependencies."""
+    # Set the required env var to prevent the ValueError
+    monkeypatch.setenv("DVC_S3_BUCKET", "test-bucket")
+
     # Mock the Path object used inside the class's __init__
     with patch('services.training.scripts.dvc_traning_management_script.Path') as mock_path, \
          patch('subprocess.run'), \
