@@ -31,11 +31,7 @@ class S3Connection:
         :raises DetailedException: On any failure configuring the client.
         """
         try:
-            self.logger = logger or configure_logger(logger_name=__name__, 
-                                                level="DEBUG",
-                                                to_console=True,
-                                                to_file=True,
-                                                log_file_name=__name__)
+            self.logger = logger or logging.getLogger("training-service")
             if S3Connection.s3_client == None:
                 self.logger.debug("Getting AWS Credentials from Environment Variable(if present)...")
                 # build kwargs only if creds exist

@@ -20,7 +20,7 @@ from common.constants import DASK_SCHEDULER_ADDRESS, PARAM_FILE_PATH, N_PARTITIO
 
 
 # This logger will automatically inherit the configuration from the FastAPI app
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prediction-service")
 
 def start_client() -> Client:
     """Start or connect to a Dask scheduler for batch inference."""

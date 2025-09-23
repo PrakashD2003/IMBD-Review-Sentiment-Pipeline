@@ -16,10 +16,9 @@ from services.training.entity.config_entity import ModelRegistryConfig
 from services.training.entity.artifact_entity import ModelTrainerArtifact, ModelEvaluationArtifact, FeatureEngineeringArtifact
 from common.constants import PARAM_FILE_PATH
 
-module_name = Path(__file__).stem
 
 # This logger will automatically inherit the configuration from the entrypoint
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("training-service")
 
 class ModelRegistry:
     """

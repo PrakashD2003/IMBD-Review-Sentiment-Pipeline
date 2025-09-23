@@ -37,7 +37,7 @@ configure_logger(
 )
 
 # Now, any module can get this logger. For this file, we get it here:
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prediction-service")
 
 def start_client() -> Client:
     """

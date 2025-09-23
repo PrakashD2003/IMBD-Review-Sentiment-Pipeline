@@ -30,10 +30,9 @@ nltk.download("stopwords", quiet=True)
 # Force WordNet to load once, setting up its private internals
 _warmup = WordNetLemmatizer().lemmatize("test")
 
-module_name = Path(__file__).stem
 
 # This logger will automatically inherit the configuration from the entrypoint
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("training-service")
 
 # Precompile regex patterns and resources at module level
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')

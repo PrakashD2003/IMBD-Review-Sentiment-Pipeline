@@ -17,7 +17,7 @@ from services.training.scripts.dvc_traning_management_script import ProductionDV
 from common.logger import configure_logger
 from common.constants import DASK_SCHEDULER_ADDRESS
 
-logger = configure_logger(
+configure_logger(
     logger_name="training-service",
     level="DEBUG",
     to_console=True,
@@ -25,6 +25,7 @@ logger = configure_logger(
     log_file_name="training-service.log",
 )
 
+logger = logging.getLogger("training-service")
 
 def start_client() -> Client:
     """
@@ -184,18 +185,23 @@ def trigger_dvc_training():
 @app.get("/train_stream")
 def stream_training_logs():
     """
-    Stream real-time logs from run_training_with_dvc as Server-Sent Events (SSE).
+    Stream real-time logs and progress from run_training_with_dvc as Server-Sent Events (SSE).
     """
     def event_stream():
         try:
-            # Loop through the generator from the training manager and yield each line
-            for log_line in training_manager.run_training_with_dvc():
-                yield f"data: {log_line}\n\n"
+            for event in training_manager.run_training_with_dvc():
+                event_type = event.get('type', 'log')
+                data = event.get('data', '')
+
+                if event_type == 'progress':
+                    # Send a 'progress' event with JSON data
+                    yield f"event: progress\ndata: {json.dumps(data)}\n\n"
+                else: # Handles 'log' and 'error' types
+                    # Send a standard 'message' event with text data
+                    yield f"data: {data}\n\n"
             
-            # Send a final event to signal the end of the stream
             yield "event: end\ndata: done\n\n"
         except Exception as e:
-            # If any exception occurs during the process, send it as an error event
             error_message = str(e).replace('\n', ' ')
             yield f"data: error: Training pipeline failed: {error_message}\n\n"
             yield "event: end\ndata: done\n\n"

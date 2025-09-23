@@ -14,7 +14,7 @@ from services.prediction.support_scripts.Data_Preprocesser import preprocess_dat
 from common.constants import DASK_SCHEDULER_ADDRESS, PARAM_FILE_PATH, N_PARTITIONS
 
 # This logger will automatically inherit the configuration from the FastAPI app
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prediction-service")
 
 def start_client() -> Client:
     """

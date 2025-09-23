@@ -11,14 +11,14 @@ from common.logger import configure_logger
 # This is called ONLY ONCE when the script starts.
 # ==============================================================================
 configure_logger(
-    logger_name="training_pipeline", # This will configure the parent logger
+    logger_name="training-service", # This will configure the parent logger
     level="DEBUG",
-    log_file_name="training-pipeline.log"
+    log_file_name="training-service.log",
 )
 # ==============================================================================
 
 # Now, getting a logger for this specific module, which will inherit the config
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("training-service")
 
 def start_client():
     """Bring up a Dask client (EKS scheduler or local)."""

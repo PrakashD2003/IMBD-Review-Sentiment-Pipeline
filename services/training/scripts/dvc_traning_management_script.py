@@ -12,16 +12,10 @@ from pathlib import Path
 from typing import Dict, Any
 
 import boto3
+import logging
 
-from common.logger import configure_logger
-
-logger = configure_logger(
-    logger_name="production_dvc_training",
-    level="INFO",
-    to_console=True,
-    to_file=True,
-    log_file_name="production_training"
-)
+# This logger will automatically inherit the configuration from the entrypoint
+logger = logging.getLogger("training-service")
 
 class ProductionDVCTrainingManager:
     """
@@ -209,10 +203,27 @@ class ProductionDVCTrainingManager:
                 
                 pre_fingerprint = self.generate_training_fingerprint()
                 logger.info(f"Training ID: {pre_fingerprint['training_id']}")
-                yield f"Training ID: {pre_fingerprint['training_id']}"
+                yield {'type': 'log', 'data': f"Training ID: {pre_fingerprint['training_id']}"}
                 
+                # Defining the stages to track progress
+                stages = [
+                    "data_ingestion", "data_preprocessing", "feature_engineering",
+                    "model_training", "model_evaluation", "model_registry"
+                ]
+                total_stages = len(stages)
+                completed_stages = 0
+
+                yield {
+                        'type': 'progress',
+                        'data': {
+                            'current_stage': "Initializing...",
+                            'completed': completed_stages,
+                            'total': total_stages
+                                }
+                            }            
+
                 logger.info("Executing DVC training pipeline...")
-                yield "Executing DVC training pipeline..."
+                yield {'type': 'log', 'data': "Executing DVC training pipeline..."}
 
                 # 1. Run DVC repro and stream/capture output
                 dvc_output_lines = []
@@ -224,19 +235,53 @@ class ProductionDVCTrainingManager:
                     cwd=self.workspace,
                     bufsize=1
                 )
+
+                # Update progress based on stage completion
                 for line in iter(process.stdout.readline, ''):
-                    clean_line = line.strip()
-                    dvc_output_lines.append(clean_line) # Capture line
-                    yield clean_line                    # Stream line
+                clean_line = line.strip()
+                dvc_output_lines.append(clean_line) # capture output stream
+                yield {'type': 'log', 'data': clean_line} # stream output
+                                  
+                 # Check for stage completion to update progress
+                if "Running stage" in clean_line:
+                    stage_name = clean_line.split("'")[1]
+                    if stage_name in stages:
+                        # Find the index of the current stage to report progress
+                        try:
+                            current_idx = stages.index(stage_name)
+                            completed_stages = current_idx
+                            yield {
+                                'type': 'progress',
+                                'data': {
+                                    'current_stage': f"Running: {stage_name}",
+                                    'completed': completed_stages,
+                                    'total': total_stages
+                                }
+                            }
+                        except ValueError:
+                            pass # Not a stage we are tracking
 
                 process.wait()
                 if process.returncode != 0:
                     raise Exception(f"DVC pipeline failed with exit code {process.returncode}")
-
-                yield "DVC pipeline completed successfully."
+                
+                # Final progress update
+                completed_stages = total_stages
+                yield {
+                    'type': 'progress',
+                    'data': {
+                        'current_stage': "DVC pipeline finished.",
+                        'completed': completed_stages,
+                        'total': total_stages
+                    }
+                }
+                 
+                logger.info("DVC pipeline completed successfully.")
+                yield {'type': 'log', 'data': "DVC pipeline completed successfully."}
                 
                 # 2. Run DVC push and stream/capture output
-                yield "Pushing artifacts to DVC remote..."
+                logger.info("Pushing artifacts to DVC remote...")
+                yield {'type': 'log', 'data': "Pushing artifacts to DVC remote..."}
                 push_process = subprocess.Popen(
                     ["dvc", "push"],
                     stdout=subprocess.PIPE,
@@ -252,10 +297,11 @@ class ProductionDVCTrainingManager:
                 if push_process.returncode != 0:
                     raise Exception(f"DVC push failed with exit code {push_process.returncode}")
                 
-                yield "Artifacts pushed to remote storage."
+                yield {'type': 'log', 'data': "Artifacts pushed to remote storage."}
+                logger.info("Artifacts pushed to remote storage.")
 
                 # 3. Perform post-run tasks silently
-                yield "Finalizing training metadata..."
+                yield {'type': 'log', 'data': "Finalizing training metadata..."}
                 post_fingerprint = self.generate_training_fingerprint()
                 
                 training_output_str = "\n".join(dvc_output_lines)
@@ -267,12 +313,18 @@ class ProductionDVCTrainingManager:
                     "reproduction_commands": self.generate_reproduction_commands(post_fingerprint)
                 }
                 logger.info("Training metadata: %s", training_metadata)
+                yield "Storing training metadata..."
+                logger.info("Storing training metadata...")
                 self.store_training_metadata(training_metadata)
                 yield "Training metadata stored successfully."
+                logger.info("Training metadata stored successfully.")
                 yield "Uploading pipeline configuration..."
+                logger.info("Uploading pipeline configuration...")
                 self.upload_pipeline_configuration()
                 yield "Pipeline configuration uploaded successfully."
-                yield "Training process completed."
+                logger.info("Pipeline configuration uploaded successfully.")
+                yield {'type': 'log', 'data': "Training process completed."}
+                logger.info("Training process completed.")
                 
                 # As a generator, this function does not return a value.
                 # Its job is to yield logs and perform actions.
@@ -280,7 +332,7 @@ class ProductionDVCTrainingManager:
             except Exception as e:
                 error_msg = f"Training with DVC failed: {e}"
                 logger.error(error_msg)
-                yield error_msg
+                yield {'type': 'error', 'data': error_msg}
                 raise
     
     def generate_reproduction_commands(self, fingerprint: Dict[str, Any]) -> Dict[str, str]:

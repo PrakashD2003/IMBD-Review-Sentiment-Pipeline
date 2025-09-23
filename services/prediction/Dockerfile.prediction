@@ -15,6 +15,10 @@ COPY requirements-prediction.txt .
 RUN python -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir -r requirements-prediction.txt
 
+# Download NLTK data files required for text processing.
+# This avoids downloading them at runtime, speeding up container startup.
+ RUN /opt/venv/bin/python -m nltk.downloader -d /opt/venv/nltk_data wordnet omw-1.4 stopwords
+
 # Copy only the necessary source code and configuration
 COPY services/prediction /app/services/prediction
 COPY common /app/common

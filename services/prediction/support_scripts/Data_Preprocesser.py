@@ -7,7 +7,6 @@ to prepare text data for feature extraction using Dask.
 import re
 import logging
 import pandas as pd
-from pathlib import Path
 
 import nltk
 import dask.dataframe as ddf
@@ -28,7 +27,7 @@ _warmup = WordNetLemmatizer().lemmatize("test")
 
 
 # This logger will automatically inherit the configuration from the FastAPI app
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prediction-service")
 
 # Precompile regex patterns and resources at module level
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')

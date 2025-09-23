@@ -241,7 +241,7 @@ function InferenceTab() {
 }
 
 function MlopsTab() {
-    // Component states...
+    // Component states for streaming, logs, and DVC info
     const [trainStatus, setTrainStatus] = useState(null);
     const [streaming, setStreaming] = useState(false);
     const [trainingLogs, setTrainingLogs] = useState("");
@@ -251,16 +251,23 @@ function MlopsTab() {
     const [reproducingRunId, setReproducingRunId] = useState(null);
     const [reproduceResult, setReproduceResult] = useState(null);
 
-    // Progress states...
-    const [totalStages, setTotalStages] = useState(null);
+    // New states specifically for the progress bar
+    const [totalStages, setTotalStages] = useState(0);
     const [completedStages, setCompletedStages] = useState(0);
     const [currentStage, setCurrentStage] = useState("");
-    const [progress, setProgress] = useState(0);
+    const progress = totalStages > 0 ? (completedStages / totalStages) * 100 : 0;
 
     const eventSourceRef = useRef(null);
-    useEffect(() => () => eventSourceRef.current?.close(), []);
+    useEffect(() => {
+        // Cleanup function to close the connection when the component unmounts
+        return () => {
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close();
+            }
+        };
+    }, []);
 
-    // --- Handlers ---
+    // --- API Handlers ---
 
     const handleDvcStatus = async () => {
         setDvcStatus({ loading: "Fetching status..." });
@@ -301,24 +308,45 @@ function MlopsTab() {
 
     const handleStreamTraining = async () => {
         if (streaming) return;
+        
+        // Reset all states for the new run
         setTrainingLogs("");
-        setTrainStatus("Streaming training logs…");
+        setTrainStatus("Connecting to stream…");
         setStreaming(true);
-        setProgress(0);
-        setCurrentStage("");
+        setCurrentStage("Initializing...");
         setCompletedStages(0);
+        setTotalStages(0);
 
         const es = new EventSource(`${TRAINING_API}/train_stream`);
         eventSourceRef.current = es;
 
-        es.onmessage = (e) => setTrainingLogs((prev) => prev + (e.data || "") + "\n");
+        es.onopen = () => {
+            setTrainStatus("Streaming training logs…");
+        };
+
+        // Handles standard log messages
+        es.onmessage = (e) => {
+            setTrainingLogs((prev) => prev + (e.data || "") + "\n");
+        };
+
+        // Handles structured progress updates
+        es.addEventListener("progress", (e) => {
+            const progressData = JSON.parse(e.data);
+            setCurrentStage(progressData.current_stage);
+            setCompletedStages(progressData.completed);
+            setTotalStages(progressData.total);
+        });
+
+        // Handles the end of the stream
         es.addEventListener("end", () => {
             setTrainStatus("Training finished");
+            setCurrentStage("Completed");
             setStreaming(false);
             es.close();
         });
+        
         es.onerror = () => {
-            setTrainStatus("Streaming error");
+            setTrainStatus("Streaming error or connection closed");
             setStreaming(false);
             es.close();
         };
@@ -335,9 +363,13 @@ function MlopsTab() {
                     {trainStatus && <span className="text-sm text-slate-500">{trainStatus}</span>}
                 </div>
 
-                <div className="mt-4">
-                  <ProgressBar value={progress} label="Training Progress" sublabel={currentStage} />
-                </div>
+                <AnimatePresence>
+                    {streaming || completedStages > 0 ? (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 overflow-hidden">
+                            <ProgressBar value={progress} label="Training Progress" sublabel={currentStage} />
+                        </motion.div>
+                    ) : null}
+                </AnimatePresence>
 
                 <div className="mt-4">
                   <CollapsiblePre text={trainingLogs} label="Live Training Logs" />
@@ -389,7 +421,6 @@ function MlopsTab() {
         </div>
     );
 }
-
 function SystemHealthTab() {
     const [metrics, setMetrics] = useState("");
     const handleFetchMetrics = async () => {

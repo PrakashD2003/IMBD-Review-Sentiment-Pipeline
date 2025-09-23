@@ -19,7 +19,7 @@ from common.constants import PARAM_FILE_PATH
 
 
 # This logger will automatically inherit the configuration from the entrypoint
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("training-service")
 
 
 # Top-level partition transform function for TF-IDF

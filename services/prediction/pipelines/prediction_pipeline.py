@@ -13,7 +13,7 @@ from common.constants import PARAM_FILE_PATH
 
 
 # This logger will automatically inherit the configuration from the FastAPI app
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prediction-service")
 
 
 
