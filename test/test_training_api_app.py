@@ -18,8 +18,10 @@ def client(monkeypatch):
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "test")
     monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
     
-    with TestClient(app) as c:
-        yield c
+    with patch('services.training.api_end_point.training_fastapi_app.ProductionDVCTrainingManager') as mock_manager_cls, \
+         TestClient(app) as c:
+        # Yield the client and the *instance* of the mocked manager
+        yield c, mock_manager_cls.return_value
 
 # --- Tests for /dvc_status ---
 
@@ -27,6 +29,7 @@ def test_get_dvc_status_success(client):
     """
     Tests the /dvc_status endpoint when 'dvc status' returns a JSON output.
     """
+    test_client, mock_training_manager = client
     mock_output = json.dumps({"data_ingestion": "changed"})
     mock_run = MagicMock(returncode=0, stdout=mock_output, stderr="")
 
@@ -39,7 +42,7 @@ def test_get_dvc_status_success(client):
         # Verify that the correct command was called
         mock_subprocess.assert_called_once_with(
             ["dvc", "status", "--json"],
-            capture_output=True, text=True, cwd=training_manager.workspace
+            capture_output=True, text=True, cwd=mock_training_manager.workspace 
         )
 
 def test_get_dvc_status_up_to_date(client):

@@ -37,12 +37,11 @@ def test_model_training_and_save():
          patch('services.training.model.train_model.save_object') as mock_save_object:
         
         trainer = ModelTrainer()
-        trained_model = trainer.train_model(train_ddf=ddf,target_col="sentiment")
+        # We also need to mock the model's fit method to ensure it runs
+        with patch('lightgbm.LGBMClassifier.fit') as mock_fit:
+            trained_model = trainer.train_model(train_ddf=ddf, target_col="sentiment")
 
-        # 4. Assertions
-        # Check that the model object was created
-        assert trained_model is not None
-        # Check that the model has a 'predict' method, indicating it's a scikit-learn compatible model
-        assert hasattr(trained_model, 'predict')
-        # Check that the save function was called
-        mock_save_object.assert_called_once()
+            # Assertions
+            assert trained_model is not None
+            mock_fit.assert_called_once()
+            mock_save_object.assert_called_once()

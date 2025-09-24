@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import pandas as pd
 import dask.dataframe as dd
+import numpy as np
 
 from services.prediction.pipelines.unified_prediction_pipeline import UnifiedPredictionPipeline
 from common.exception import DetailedException
@@ -58,8 +59,9 @@ def test_predict_single():
         input_df = pd.DataFrame({"review": ["a good movie"]})
         
         # Configure mock return values for the prediction flow
-        mock_vectorizer.transform.return_value = [[0.1, 0.9]] # Dummy vectorized output
-        mock_model.predict.return_value = ["positive"]
+        mock_vectorizer.transform.return_value = [[0.1, 0.9]]
+        # Return a numpy array, just like a real model would
+        mock_model.predict.return_value = np.array([1]) 
         mock_model.predict_proba.return_value = [[0.1, 0.9]]
 
         result_df = pipeline.predict_single(input_df)

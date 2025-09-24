@@ -21,8 +21,10 @@ def client(monkeypatch):
     monkeypatch.setenv("DAGSHUB_REPO_NAME", "test")
 
     # 2. Mock all external dependencies required by the app on startup
-    with patch('services.prediction.pipelines.unified_prediction_pipeline.load_params', return_value={}) as mock_load_params, \
-         patch('services.prediction.pipelines.unified_prediction_pipeline.get_latest_model', return_value=MagicMock()) as mock_get_model, \
+    # Provide a realistic mock for params
+    mock_params = {"global_params": {"text_column": "review"}}
+    with patch('services.prediction.pipelines.unified_prediction_pipeline.load_params', return_value=mock_params), \
+         patch('services.prediction.pipelines.unified_prediction_pipeline.get_latest_model', return_value=MagicMock()), \
          TestClient(app) as c:
         yield c
 
@@ -40,15 +42,12 @@ def test_predict_endpoint(client):
     
     # We need to mock the pipeline's predict_single method for the test
     with patch('services.prediction.api_end_point.prediction_fastapi_app.pipeline.predict_single') as mock_predict:
-        # Define the mock return value
         mock_predict.return_value = pd.DataFrame({
             "review": payload["reviews"],
-            "sentiment": ["positive", "negative"],
+            "prediction": [1, 0], # <-- Use the column name the API expects
             "probability": [0.99, 0.98]
         })
-        
         response = client.post("/predict", json=payload)
-
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "success"

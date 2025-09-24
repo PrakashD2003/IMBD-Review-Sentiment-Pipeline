@@ -41,7 +41,7 @@ def test_tfidf_vectorization_shape():
         vectorizer, train_features, test_features = fe.vectorize_tfidf(
             train_ddf=train_ddf,
             test_ddf=test_ddf,
-            column="sentiment"
+            column="review"
         )
 
     # 4. Assertions
