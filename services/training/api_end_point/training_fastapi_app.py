@@ -213,10 +213,13 @@ def reproduce_training(training_id: str):
     """Reproduce a specific training run."""
     try:
         result = training_manager.reproduce_training(training_id)
+        if result.get("status") == "reproduction_failed":
+            raise HTTPException(status_code=500, detail=result.get("error", "Reproduction failed"))
         return result
+    except HTTPException as http_exc:
+        raise http_exc # Re-raise known HTTP exceptions
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/dvc_status")
 def get_dvc_status():
     """Get current DVC pipeline status."""
@@ -244,6 +247,9 @@ def get_dvc_status():
 def get_training_history():
     """Get history of all training runs."""
     try:
+        if training_manager is None:
+             raise HTTPException(status_code=503, detail="Training manager not initialized")
+
         # List all experiments from S3
         response = training_manager.s3_client.list_objects_v2(
             Bucket=training_manager.s3_bucket,

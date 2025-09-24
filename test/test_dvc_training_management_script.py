@@ -62,10 +62,14 @@ def test_download_pipeline_configuration(manager):
     manager_instance, mock_s3_client = manager
     workspace_path_str = str(manager_instance.workspace)
     mock_s3_client.download_file.assert_any_call(
-        "my-test-bucket", "pipeline-configs/v1.0/dvc.yaml", f"{workspace_path_str}/dvc.yaml"
+        "my-test-bucket", 
+        f"pipeline-configs/v1.0/{manager_instance.commit_sha}/dvc.yaml", 
+        f"{workspace_path_str}/dvc.yaml"
     )
     mock_s3_client.download_file.assert_any_call(
-        "my-test-bucket", "pipeline-configs/v1.0/params.yaml", f"{workspace_path_str}/params.yaml"
+        "my-test-bucket", 
+        f"pipeline-configs/v1.0/{manager_instance.commit_sha}/params.yaml", 
+        f"{workspace_path_str}/params.yaml"
     )
 
 def test_upload_pipeline_configuration(manager):
@@ -141,13 +145,51 @@ def test_run_training_with_dvc_failure(manager):
             list(manager_instance.run_training_with_dvc())
 
 def test_reproduce_training(manager):
+    """
+    Tests the entire training reproduction process.
+
+    Verifies that:
+    1. The correct pipeline configuration files (dvc.lock, dvc.yaml, params.yaml) are downloaded from the experiment's S3 prefix.
+    2. DVC commands `pull`, `checkout`, and `repro` are executed in the correct order.
+    """
     manager_instance, mock_s3_client = manager
     training_id = "train_test_123"
+    workspace_path_str = str(manager_instance.workspace)
+
+    # Mock the subprocess.run command to simulate DVC calls
     with patch('subprocess.run') as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stdout="Success")
-        manager_instance.reproduce_training(training_id)
-    
-    # Assert that the download was called on the mock object
+        # Configure the mock to simulate successful execution
+        mock_run.return_value = MagicMock(returncode=0, stdout="Success", stderr="")
+        
+        # --- Act ---
+        # Call the method under test
+        result = manager_instance.reproduce_training(training_id)
+
+    # --- Assert ---
+    # 1. Verify that the correct pipeline files were downloaded from S3
+    base_prefix = f"experiments/{training_id}/"
     mock_s3_client.download_file.assert_any_call(
-        "my-test-bucket", f"experiments/{training_id}/dvc.lock", manager_instance.workspace / "dvc.lock"
+        "my-test-bucket", f"{base_prefix}dvc.lock", f"{workspace_path_str}/dvc.lock"
     )
+    mock_s3_client.download_file.assert_any_call(
+        "my-test-bucket", f"{base_prefix}dvc.yaml", f"{workspace_path_str}/dvc.yaml"
+    )
+    mock_s3_client.download_file.assert_any_call(
+        "my-test-bucket", f"{base_prefix}params.yaml", f"{workspace_path_str}/params.yaml"
+    )
+
+    # 2. Verify that the DVC commands were executed
+    expected_calls = [
+        # The order of these first two calls is important
+        call(['dvc', 'pull'], check=True, cwd=manager_instance.workspace),
+        call(['dvc', 'checkout'], check=True, cwd=manager_instance.workspace),
+        # The final 'repro' call executes the pipeline
+        call(['dvc', 'repro', '-f'], capture_output=True, text=True, cwd=manager_instance.workspace)
+    ]
+    mock_run.assert_has_calls(expected_calls, any_order=False)
+
+    # 3. Verify the structure of the successful return value
+    assert result["status"] == "reproduction_successful"
+    assert result["original_training_id"] == training_id
+    assert "reproduction_timestamp" in result
+    
