@@ -5,6 +5,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
+# Import the app object
 from services.training.api_end_point.training_fastapi_app import app
 
 # --- Helper to set environment variables ---
@@ -21,12 +22,16 @@ def set_env_vars(monkeypatch):
 @pytest.fixture
 def client():
     """
-    Provides a TestClient and a mock of the ProductionDVCTrainingManager.
-    This fixture ensures the FastAPI app starts up with the manager already mocked,
-    providing a consistent testing environment.
+    Provides a TestClient and a correctly injected mock for ProductionDVCTrainingManager.
+    
+    This fixture patches the actual 'training_manager' global variable that the FastAPI
+    app uses, ensuring our mock is the one being called by the endpoints.
     """
-    with patch('services.training.api_end_point.training_fastapi_app.ProductionDVCTrainingManager') as MockManager:
-        mock_manager_instance = MockManager.return_value
+    # Create a mock instance first
+    mock_manager_instance = MagicMock()
+
+    # Patch the global variable in the app's module with our instance
+    with patch('services.training.api_end_point.training_fastapi_app.training_manager', mock_manager_instance):
         with TestClient(app) as test_client:
             yield test_client, mock_manager_instance
 
@@ -35,7 +40,7 @@ def client():
 def test_get_dvc_status_success(client):
     """Tests the /dvc_status endpoint when 'dvc status' returns a JSON output."""
     test_client, mock_manager = client
-    mock_manager.workspace = "/mock/workspace" # Configure attribute on the mock
+    mock_manager.workspace = "/mock/workspace"
     
     mock_output = json.dumps({"data_ingestion": "changed"})
     mock_run = MagicMock(returncode=0, stdout=mock_output, stderr="")
@@ -50,7 +55,8 @@ def test_get_dvc_status_success(client):
 
 def test_get_dvc_status_up_to_date(client):
     """Tests the /dvc_status endpoint when the pipeline is up-to-date."""
-    test_client, _ = client
+    test_client, mock_manager = client
+    mock_manager.workspace = "/mock/workspace"
     mock_run = MagicMock(returncode=0, stdout="", stderr="")
     
     with patch('subprocess.run', return_value=mock_run):
@@ -61,7 +67,8 @@ def test_get_dvc_status_up_to_date(client):
 
 def test_get_dvc_status_command_error(client):
     """Tests the /dvc_status endpoint when the dvc command fails."""
-    test_client, _ = client
+    test_client, mock_manager = client
+    mock_manager.workspace = "/mock/workspace"
     mock_run = MagicMock(returncode=1, stdout="", stderr="DVC error")
     
     with patch('subprocess.run', return_value=mock_run):
@@ -81,6 +88,7 @@ def test_get_training_history(client):
             {'Prefix': 'experiments/train_20250922_150000/'}
         ]
     }
+    # Configure the mock s3_client on our manager instance
     mock_manager.s3_client.list_objects_v2.return_value = mock_s3_response
     
     response = test_client.get("/training_history")
