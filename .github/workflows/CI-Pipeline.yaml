@@ -44,7 +44,7 @@ jobs:
         run: |
           pip install dvc # Install dvc for the DAG check
           dvc dag # This command checks if the pipeline graph is valid
-          dvc repro --dry # This command checks if the pipeline can be reproduced without actually running it
+      # will uncomment this when self hosted runner setup will be completed  # dvc repro --dry # This command checks if the pipeline can be reproduced without actually running it
 
   build-docker-images:
     name: 🐳 Build Docker Images

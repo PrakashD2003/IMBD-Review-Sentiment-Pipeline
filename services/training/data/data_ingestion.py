@@ -106,6 +106,13 @@ class DataIngestion:
                 file_key=self.data_ingestion_config.s3_data_file_key,
                 n_partitions=self.data_ingestion_config.n_partitions
             )
+            # Verify that the dataframe is not empty
+            if ddf_raw.npartitions == 0 or len(ddf_raw.head(1)) == 0:
+                raise ValueError(
+                    "Raw data loaded from S3 is empty. Please check the S3 bucket/key configuration "
+                    "and ensure the CI environment has the necessary AWS credentials."
+                )
+            
             logger.info("Successfully loaded raw CSV into Dask DataFrame.")
             
             logger.debug("Saving raw data as csv at: '%s'",self.data_ingestion_config.raw_data_file_path)

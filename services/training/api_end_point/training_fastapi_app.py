@@ -151,59 +151,36 @@ async def metrics_middleware(request: Request, call_next):
 # ─── Prometheus scrape endpoint ────────────────────────────────────────────────
 @app.get("/metrics")
 def metrics():
-    """
-    Expose Prometheus metrics for scraping.
-
-    Returns
-    -------
-    Response
-        Plain-text metrics in Prometheus exposition format.
-    """
+    """Expose Prometheus metrics for scraping."""
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
 
-# ─── Training and DVC endpoints ───────────────────────────────────────────────
-@app.post("/train")
-def trigger_dvc_training():
-    """Trigger DVC-managed training with complete reproducibility."""
-    try:
-        with TRAINING_DURATION.time():
-             result = training_manager.run_training_with_dvc()
-        return {
-            "status": "training_completed",
-            "training_id": result["post_training"]["training_id"],
-            "fingerprint": result["post_training"],
-            "reproduction_info": result["reproduction_commands"]
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-
+# ─── Training and DVC endpoints ────────────────────────────────────────────────
 @app.get("/train_stream")
 def stream_training_logs():
     """
     Stream real-time logs and progress from run_training_with_dvc as Server-Sent Events (SSE).
     """
     def event_stream():
-        try:
-            for event in training_manager.run_training_with_dvc():
-                event_type = event.get('type', 'log')
-                data = event.get('data', '')
+        with TRAINING_DURATION.time():
+            try:
+                for event in training_manager.run_training_with_dvc():
+                    event_type = event.get('type', 'log')
+                    data = event.get('data', '')
 
-                if event_type == 'progress':
-                    # Send a 'progress' event with JSON data
-                    yield f"event: progress\ndata: {json.dumps(data)}\n\n"
-                else: # Handles 'log' and 'error' types
-                    # Send a standard 'message' event with text data
-                    yield f"data: {data}\n\n"
-            
-            yield "event: end\ndata: done\n\n"
-        except Exception as e:
-            error_message = str(e).replace('\n', ' ')
-            yield f"data: error: Training pipeline failed: {error_message}\n\n"
-            yield "event: end\ndata: done\n\n"
+                    if event_type == 'progress':
+                        # Send a 'progress' event with JSON data
+                        yield f"event: progress\ndata: {json.dumps(data)}\n\n"
+                    else: # Handles 'log' and 'error' types
+                        # Send a standard 'message' event with text data
+                        yield f"data: {data}\n\n"
+                
+                yield "event: end\ndata: done\n\n"
+            except Exception as e:
+                error_message = str(e).replace('\n', ' ')
+                yield f"data: error: Training pipeline failed: {error_message}\n\n"
+                yield "event: end\ndata: done\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
