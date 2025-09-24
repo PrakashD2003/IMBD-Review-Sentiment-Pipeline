@@ -38,7 +38,7 @@ def test_tfidf_vectorization_shape():
     # 3. Run the method under test, mocking the file dependency
     with patch('services.training.features.feature_engineering.load_params', return_value=mock_params):
         fe = FeatureEngineering()
-        vectorizer, train_features, test_features = fe.vectorize_tfidf(
+        train_features, test_features, vectorizer = fe.vectorize_tfidf(
             train_ddf=train_ddf,
             test_ddf=test_ddf,
             column="review"
@@ -47,7 +47,8 @@ def test_tfidf_vectorization_shape():
     # 4. Assertions
     assert train_features.shape[1] == test_features.shape[1]
     assert "good movie" in vectorizer.get_feature_names_out()
-    assert "bad film" not in vectorizer.get_feature_names_out() # Should not be a feature
-    # Check that sentiment column is preserved
+    assert "bad film" not in vectorizer.get_feature_names_out()
     assert "sentiment" in train_features.columns
     assert "sentiment" in test_features.columns
+    assert train_features.shape[0] == train_df.shape[0]
+    assert test_features.shape[0] == test_df.shape[0]

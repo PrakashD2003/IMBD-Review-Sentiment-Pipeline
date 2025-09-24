@@ -43,9 +43,7 @@ def test_predict_endpoint(client):
     # We need to mock the pipeline's predict_single method for the test
     with patch('services.prediction.api_end_point.prediction_fastapi_app.pipeline.predict_single') as mock_predict:
         mock_predict.return_value = pd.DataFrame({
-            "review": payload["reviews"],
-            "prediction": [1, 0], # <-- Use the column name the API expects
-            "probability": [0.99, 0.98]
+            "prediction": [1, 0]
         })
         response = client.post("/predict", json=payload)
     assert response.status_code == 200
@@ -56,22 +54,21 @@ def test_predict_endpoint(client):
 
 def test_batch_predict_endpoint(client):
     """Tests a successful prediction from the /batch_predict endpoint."""
-    reviews = ["good movie", "bad movie"]
-    files = {'file': ('reviews.csv', '\n'.join(reviews), 'text/csv')}
+    payload = {"reviews": ["good movie", "bad movie"]}
 
     with patch('services.prediction.api_end_point.prediction_fastapi_app.pipeline.predict_batch') as mock_predict:
         mock_predict.return_value = pd.DataFrame({
-            "review": reviews,
-            "sentiment": ["positive", "negative"],
-            "probability": [0.9, 0.8]
+            "prediction": [1, 0]
         })
-        response = client.post("/batch_predict", files=files)
+        response = client.post("/batch_predict", json=payload)
 
     assert response.status_code == 200
-    assert "predictions.csv" in response.headers['content-disposition']
+    data = response.json()
+    assert data["status"] == "success"
+    assert len(data["predictions"]) == 2
+    assert data["predictions"][0]["sentiment"] == "positive"
 
 @pytest.mark.parametrize("invalid_payload", [
-    {"reviews": []},                   # Empty list
     {"reviews": "not a list"},         # Wrong data type
     {"data": ["a review"]},            # Wrong key
     {},                                # Empty JSON

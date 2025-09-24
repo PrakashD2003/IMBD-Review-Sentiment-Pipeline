@@ -34,14 +34,15 @@ def test_model_training_and_save():
 
     # 3. Run the method under test within the mocked context
     with patch('services.training.model.train_model.load_params', return_value=mock_params), \
-         patch('services.training.model.train_model.save_object') as mock_save_object:
+         patch('services.training.model.train_model.save_object') as mock_save_object, \
+         patch('services.training.model.train_model.load_parquet_as_dask_dataframe', return_value=ddf):
         
         trainer = ModelTrainer()
         # We also need to mock the model's fit method to ensure it runs
         with patch('lightgbm.LGBMClassifier.fit') as mock_fit:
-            trained_model = trainer.train_model(train_ddf=ddf, target_col="sentiment")
+            # Call the correct method that saves the model
+            trainer.initiate_model_training()
 
             # Assertions
-            assert trained_model is not None
             mock_fit.assert_called_once()
             mock_save_object.assert_called_once()

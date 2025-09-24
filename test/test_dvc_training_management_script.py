@@ -49,20 +49,22 @@ def test_setup_dvc_environment(manager):
     Verifies that the __init__ method correctly sets up instance attributes
     based on the mocked environment variables.
     """
-    assert manager.s3_bucket == "my-test-bucket"
-    assert manager.pipeline_version == "v1.0"
+    manager_instance, _ = manager
+    assert manager_instance.s3_bucket == "my-test-bucket"
+    assert manager_instance.pipeline_version == "v1.0"
     # Assert that the S3 client was used to download config files
-    assert manager.s3_client.download_file.call_count > 0
+    assert manager_instance.s3_client.download_file.call_count > 0
 
 def test_download_pipeline_configuration(manager):
     """
     Tests that the logic correctly attempts to download pipeline files from S3.
     """
-    workspace_path_str = str(manager.workspace)
-    manager.s3_client.download_file.assert_any_call(
+    manager_instance, mock_s3_client = manager
+    workspace_path_str = str(manager_instance.workspace)
+    mock_s3_client.download_file.assert_any_call(
         "my-test-bucket", "pipeline-configs/v1.0/dvc.yaml", f"{workspace_path_str}/dvc.yaml"
     )
-    manager.s3_client.download_file.assert_any_call(
+    mock_s3_client.download_file.assert_any_call(
         "my-test-bucket", "pipeline-configs/v1.0/params.yaml", f"{workspace_path_str}/params.yaml"
     )
 
@@ -82,6 +84,7 @@ def test_generate_training_fingerprint(manager):
     """
     Tests the creation of a unique training fingerprint.
     """
+    manager_instance, _ = manager
     mock_dvc_lock = "stages: ..."
     mock_params = "train_size: 0.8"
     m = mock_open()
@@ -92,9 +95,9 @@ def test_generate_training_fingerprint(manager):
 
     with patch('builtins.open', m), \
          patch('pathlib.Path.exists', return_value=True), \
-         patch.object(manager, 'get_dvc_data_fingerprints', return_value={"status": "mock_status"}):
+         patch.object(manager_instance, 'get_dvc_data_fingerprints', return_value={"status": "mock_status"}):
         
-        fingerprint = manager.generate_training_fingerprint()
+        fingerprint = manager_instance.generate_training_fingerprint()
 
     assert fingerprint["pipeline_version"] == "v1.0"
     assert fingerprint["commit_sha"] == "test_sha"
@@ -105,27 +108,29 @@ def test_run_training_with_dvc_success(manager):
     """
     Tests the successful execution of the DVC training pipeline.
     """
+    manager_instance, _ = manager
     mock_process = MagicMock()
     mock_process.stdout.readline.side_effect = ["Running stage 'data_ingestion'\n", ""]
     mock_process.wait.return_value = None
     mock_process.returncode = 0
 
     with patch('subprocess.Popen', return_value=mock_process) as mock_popen:
-        events = list(manager.run_training_with_dvc())
+        events = list(manager_instance.run_training_with_dvc())
     
     # Check that 'dvc repro' and 'dvc push' were called
     assert mock_popen.call_count == 2
     mock_popen.assert_any_call(
-        ["dvc", "repro", "-f", "-v"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=manager.workspace, bufsize=1
+        ["dvc", "repro", "-f", "-v"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=manager_instance.workspace, bufsize=1
     )
     mock_popen.assert_any_call(
-        ["dvc", "push"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=manager.workspace, bufsize=1
+        ["dvc", "push"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=manager_instance.workspace, bufsize=1
     )
 
 def test_run_training_with_dvc_failure(manager):
     """
     Tests that an exception is raised when the 'dvc repro' command fails.
     """
+    manager_instance, _ = manager
     mock_process = MagicMock()
     mock_process.stdout.readline.side_effect = ["DVC failed miserably\n", ""]
     mock_process.wait.return_value = None
@@ -133,7 +138,7 @@ def test_run_training_with_dvc_failure(manager):
 
     with patch('subprocess.Popen', return_value=mock_process):
         with pytest.raises(Exception, match="DVC pipeline failed with exit code 1"):
-            list(manager.run_training_with_dvc())
+            list(manager_instance.run_training_with_dvc())
 
 def test_reproduce_training(manager):
     manager_instance, mock_s3_client = manager

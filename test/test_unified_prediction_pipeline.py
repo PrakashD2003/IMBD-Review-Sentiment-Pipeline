@@ -48,7 +48,7 @@ def test_predict_single():
     """
     with patch('services.prediction.pipelines.unified_prediction_pipeline.load_params', return_value=MOCK_PARAMS), \
          patch('services.prediction.pipelines.unified_prediction_pipeline.get_latest_model') as mock_get_model:
-
+        
         # Setup mocks for model and vectorizer
         mock_model = MagicMock()
         mock_vectorizer = MagicMock()
@@ -67,8 +67,8 @@ def test_predict_single():
         result_df = pipeline.predict_single(input_df)
 
         assert isinstance(result_df, pd.DataFrame)
-        assert "sentiment" in result_df.columns
-        assert result_df.iloc[0]["sentiment"] == "positive"
+        assert "prediction" in result_df.columns
+        assert result_df.iloc[0]["prediction"] == 1
 
 def test_predict_batch():
     """

@@ -28,6 +28,7 @@ class ProductionDVCTrainingManager:
         self.s3_bucket = os.getenv("DVC_S3_BUCKET")
         self.no_scm = os.getenv("DVC_NO_SCM", "true").lower() in ("1", "true", "yes")
         self.pipeline_version = os.getenv("PIPELINE_VERSION", "latest")
+        self.commit_sha = os.getenv("COMMIT_SHA", "unknown")
         self.s3_client = boto3.client('s3')
         
         # Ensure workspace exists

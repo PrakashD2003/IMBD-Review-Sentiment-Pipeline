@@ -221,9 +221,8 @@ async def metrics_middleware(request: Request, call_next):
     ).inc()
     return response
 
-
 # ─── Single‐record inference ───────────────────────────────────────────────────
-@app.post("/predict", response_model=PredictResponse)
+@app.post("/predict")
 async def predict(req: PredictRequest):
     """
     Perform low-latency inference on a small batch of reviews.
@@ -250,14 +249,17 @@ async def predict(req: PredictRequest):
         with INFERENCE_TIME.labels(mode="single").time():
             df = pd.DataFrame({"review": req.reviews})
             result_df = pipeline.predict_single(df)
-            preds = result_df["prediction"].tolist()
-        return PredictResponse(predictions=preds)
+            
+            # Map predictions to sentiment labels
+            sentiments = ["negative" if pred == 0 else "positive" for pred in result_df["prediction"]]
+            
+        return {"status": "success", "predictions": [{"sentiment": s} for s in sentiments]}
     except Exception as e:
         logger.exception("Single prediction error")
         raise HTTPException(status_code=500, detail=str(e))
-
+    
 # ─── Bulk (Dask-powered) inference ──────────────────────────────────────────────
-@app.post("/batch_predict", response_model=PredictResponse)
+@app.post("/batch_predict")
 async def batch_predict(req: PredictRequest):
     """
     Perform high-throughput batch inference using Dask.
@@ -277,16 +279,18 @@ async def batch_predict(req: PredictRequest):
     HTTPException
         - 503: If pipeline is not initialized.
         - 500: For any runtime errors during inference.
-    """ 
+    """  
     if pipeline is None:
         raise HTTPException(status_code=503, detail="Pipeline unavailable")
     try:
         with INFERENCE_TIME.labels(mode="batch").time():
-            import pandas as pd
             df = pd.DataFrame({"review": req.reviews})
             result_df = pipeline.predict_batch(df)
-            preds = result_df["prediction"].tolist()
-        return PredictResponse(predictions=preds)
+            
+            # Map predictions to sentiment labels
+            sentiments = ["negative" if pred == 0 else "positive" for pred in result_df["prediction"]]
+
+        return {"status": "success", "predictions": [{"sentiment": s} for s in sentiments]}
     except Exception as e:
         logger.exception("Batch prediction error")
         raise HTTPException(status_code=500, detail=str(e))
@@ -321,3 +325,10 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", 8000)),
         log_level="info",
     )
+
+# ─── Health Check ─────────────────────────────────────────────────────────────────
+@app.get("/health")
+async def health_check():
+    """Simple health check endpoint."""
+    return {"status": "ok"}
+

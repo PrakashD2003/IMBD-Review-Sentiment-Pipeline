@@ -34,7 +34,7 @@ def test_get_dvc_status_success(client):
     mock_run = MagicMock(returncode=0, stdout=mock_output, stderr="")
 
     with patch('subprocess.run', return_value=mock_run) as mock_subprocess:
-        response = client.get("/dvc_status")
+        response = test_client.get("/dvc_status")
         
         assert response.status_code == 200
         data = response.json()
@@ -49,9 +49,10 @@ def test_get_dvc_status_up_to_date(client):
     """
     Tests the /dvc_status endpoint when the pipeline is up-to-date (empty stdout).
     """
+    test_client, _ = client
     mock_run = MagicMock(returncode=0, stdout="", stderr="")
     with patch('subprocess.run', return_value=mock_run):
-        response = client.get("/dvc_status")
+        response = test_client.get("/dvc_status")
         
         assert response.status_code == 200
         assert response.json()["dvc_status"] == {"status": "up_to_date"}
@@ -60,9 +61,10 @@ def test_get_dvc_status_command_error(client):
     """
     Tests the /dvc_status endpoint when the dvc command fails.
     """
+    test_client, _ = client
     mock_run = MagicMock(returncode=1, stdout="", stderr="DVC error")
     with patch('subprocess.run', return_value=mock_run):
-        response = client.get("/dvc_status")
+        response = test_client.get("/dvc_status")
 
         assert response.status_code == 200
         assert response.json()["dvc_status"] == {"error": "DVC error"}
@@ -73,6 +75,7 @@ def test_get_training_history(client):
     """
     Tests the /training_history endpoint by mocking the S3 client response.
     """
+    test_client, mock_training_manager = client
     # This simulates the response from s3_client.list_objects_v2
     mock_s3_response = {
         'CommonPrefixes': [
@@ -82,9 +85,9 @@ def test_get_training_history(client):
     }
     
     # We need to patch the s3_client attribute within the training_manager instance
-    with patch.object(training_manager, 's3_client', new_callable=MagicMock) as mock_s3:
+    with patch.object(mock_training_manager, 's3_client', new_callable=MagicMock) as mock_s3:
         mock_s3.list_objects_v2.return_value = mock_s3_response
-        response = client.get("/training_history")
+        response = test_client.get("/training_history")
 
         assert response.status_code == 200
         data = response.json()
@@ -99,10 +102,11 @@ def test_reproduce_training_success(client):
     """
     Tests a successful reproduction request.
     """
+    test_client, mock_training_manager = client
     reproduce_output = {"status": "reproduction_successful", "original_training_id": "train_123"}
     # Patch the method on the manager instance itself
-    with patch.object(training_manager, 'reproduce_training', return_value=reproduce_output) as mock_reproduce:
-        response = client.post("/reproduce/train_123")
+    with patch.object(mock_training_manager, 'reproduce_training', return_value=reproduce_output) as mock_reproduce:
+        response = test_client.post("/reproduce/train_123")
         
         assert response.status_code == 200
         assert response.json() == reproduce_output
@@ -112,8 +116,9 @@ def test_reproduce_training_failure(client):
     """
     Tests a failed reproduction request.
     """
-    with patch.object(training_manager, 'reproduce_training', side_effect=Exception("Repro failed")) as mock_reproduce:
-        response = client.post("/reproduce/train_456")
+    test_client, mock_training_manager = client
+    with patch.object(mock_training_manager, 'reproduce_training', side_effect=Exception("Repro failed")) as mock_reproduce:
+        response = test_client.post("/reproduce/train_456")
 
         assert response.status_code == 500
         assert response.json() == {"detail": "Repro failed"}
@@ -125,6 +130,7 @@ def test_stream_training_logs_success(client):
     """
     Tests the streaming endpoint for a successful training run.
     """
+    test_client, mock_training_manager = client
     # This generator simulates the output of run_training_with_dvc
     def mock_stream_generator():
         yield {'type': 'log', 'data': 'Starting DVC repro...'}
@@ -132,8 +138,8 @@ def test_stream_training_logs_success(client):
         yield {'type': 'log', 'data': 'Stage data_ingestion finished.'}
         yield {'type': 'log', 'data': 'Pushing artifacts to S3...'}
     
-    with patch.object(training_manager, 'run_training_with_dvc', return_value=mock_stream_generator()) as mock_stream:
-        response = client.get("/train_stream")
+    with patch.object(mock_training_manager, 'run_training_with_dvc', return_value=mock_stream_generator()) as mock_stream:
+        response = test_client.get("/train_stream")
         
         assert response.status_code == 200
         assert "text/event-stream" in response.headers['content-type']
