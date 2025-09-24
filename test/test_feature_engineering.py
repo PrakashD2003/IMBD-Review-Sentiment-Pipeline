@@ -50,5 +50,5 @@ def test_tfidf_vectorization_shape():
     assert "bad film" not in vectorizer.get_feature_names_out()
     assert "sentiment" in train_features.columns
     assert "sentiment" in test_features.columns
-    assert train_features.shape[0] == train_df.shape[0]
-    assert test_features.shape[0] == test_df.shape[0]
+    assert train_features.shape[0].compute() == train_df.shape[0]
+    assert test_features.shape[0].compute() == test_df.shape[0]

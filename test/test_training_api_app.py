@@ -76,7 +76,8 @@ def test_get_training_history(client):
     Tests the /training_history endpoint by mocking the S3 client response.
     """
     test_client, mock_training_manager = client
-    # This simulates the response from s3_client.list_objects_v2
+    
+    # This is the correctly structured mock S3 response
     mock_s3_response = {
         'CommonPrefixes': [
             {'Prefix': 'experiments/train_20250923_103000/'},
@@ -84,17 +85,23 @@ def test_get_training_history(client):
         ]
     }
     
-    # We need to patch the s3_client attribute within the training_manager instance
     with patch.object(mock_training_manager, 's3_client', new_callable=MagicMock) as mock_s3:
+        # Set the return value of the mocked method
         mock_s3.list_objects_v2.return_value = mock_s3_response
+        
         response = test_client.get("/training_history")
 
         assert response.status_code == 200
         data = response.json()
         assert data["total_count"] == 2
-        # It should sort them in reverse order
         assert data["training_runs"] == ["train_20250923_103000", "train_20250922_150000"]
-        mock_s3.list_objects_v2.assert_called_once()
+        
+        # Verify that the S3 client was called with the correct parameters
+        mock_s3.list_objects_v2.assert_called_once_with(
+            Bucket=mock_training_manager.s3_bucket,
+            Prefix="experiments/",
+            Delimiter="/"
+        )
 
 # --- Tests for /reproduce/{training_id} ---
 
@@ -156,3 +163,26 @@ def test_stream_training_logs_success(client):
         assert events[3] == "data: Pushing artifacts to S3..."
         assert events[4] == "event: end\ndata: done"
         mock_stream.assert_called_once()
+
+# --- Tests for /pipeline_info ---
+
+def test_get_pipeline_info_success(client):
+    """
+    Tests the /pipeline_info endpoint when 'dvc dag' returns a JSON output.
+    """
+    test_client, mock_training_manager = client
+    mock_dag_output = json.dumps({"nodes": ["data_ingestion", "model_training"]})
+    mock_run = MagicMock(returncode=0, stdout=mock_dag_output, stderr="")
+
+    with patch('subprocess.run', return_value=mock_run) as mock_subprocess:
+        response = test_client.get("/pipeline_info")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["pipeline_version"] == mock_training_manager.pipeline_version
+        assert data["dag"] == {"nodes": ["data_ingestion", "model_training"]}
+        # Verify that the correct command was called
+        mock_subprocess.assert_called_once_with(
+            ["dvc", "dag", "--json"],
+            capture_output=True, text=True, cwd=mock_training_manager.workspace 
+        )

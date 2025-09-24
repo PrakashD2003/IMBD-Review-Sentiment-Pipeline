@@ -43,15 +43,18 @@ class ProductionDVCTrainingManager:
         """Initialize DVC environment for production training."""
         try:
             logger.info("Setting up DVC environment for production training...")
-            
-            # 1) Init DVC {no-scm(without Git) only if requested}
+             
+            # 1). Download pipeline configuration first (so .dvc/config if present is restored)
+            self.download_pipeline_configuration()
+
+            # 2) Init DVC {no-scm(without Git) only if requested}
             if not (self.workspace / ".dvc").exists():
                 cmd = ["dvc", "init"]
                 if self.no_scm:
                     cmd.append("--no-scm")
                 subprocess.run(cmd, check=True, cwd=self.workspace)
             
-            # 2. Configure S3 remote storage
+            # 2). Configure S3 remote storage
             if self.s3_bucket:
                 dvc_remote_url = f"s3://{self.s3_bucket}/dvc-storage"
                 
@@ -68,9 +71,6 @@ class ProductionDVCTrainingManager:
             else:
                 raise ValueError("DVC_S3_BUCKET environment variable not set")
             
-            # 3. Download pipeline configuration for this version
-            self.download_pipeline_configuration()
-            
         except Exception as e:
             logger.error(f"Failed to setup DVC environment: {e}")
             raise
@@ -78,33 +78,48 @@ class ProductionDVCTrainingManager:
     def download_pipeline_configuration(self):
         """Download DVC pipeline configuration from S3."""
         try:
-            config_prefix = f"pipeline-configs/{self.pipeline_version}/"
+            # prefer path with commit sha (for immutable versioned pipeline configs)
+            prefixes_to_try = [
+                f"pipeline-configs/{self.pipeline_version}/{self.commit_sha}/",
+                f"pipeline-configs/{self.pipeline_version}/"
+            ]
             
             # Download dvc.yaml, dvc.lock, params.yaml
-            config_files = ["dvc.yaml", "params.yaml"]
+            config_files = ["dvc.yaml", "params.yaml", "dvc.lock"]
             
-            for config_file in config_files:
+            downloaded_any = False
+            for prefix in prefixes_to_try:
+                for config_file in config_files:
+                    try:
+                        s3_key = f"{prefix}{config_file}"
+                        local_path = self.workspace / config_file
+                        self.s3_client.download_file(self.s3_bucket, s3_key, str(local_path))
+                        logger.info(f"Downloaded {config_file} from S3 ({s3_key})")
+                        downloaded_any = True
+                    except Exception:
+                        # ignore per-file errors; we'll try next prefix or file
+                        pass
+            
+                # try to download .dvc directory files if they exist under this prefix
                 try:
-                    s3_key = f"{config_prefix}{config_file}"
-                    local_path = self.workspace / config_file
-                    
-                    self.s3_client.download_file(
-                        self.s3_bucket, s3_key, str(local_path)
-                    )
-                    logger.info(f"Downloaded {config_file} from S3")
-                except Exception as e:
-                    logger.warning(f"Could not download {config_file}: {e}")
-                    # In production, you might want to fail here
-                    # For now, we'll continue with local versions
-            
-            # Try to download existing dvc.lock if available
-            try:
-                s3_key = f"{config_prefix}dvc.lock"
-                local_path = self.workspace / "dvc.lock"
-                self.s3_client.download_file(self.s3_bucket, s3_key, str(local_path))
-                logger.info("Downloaded existing dvc.lock from S3")
-            except:
-                logger.info("No existing dvc.lock found in S3 - will create new one")
+                    # try common .dvc files (config and config.local)
+                    for dvc_file in ("config", "config.local"):
+                        s3_key = f"{prefix}.dvc/{dvc_file}"
+                        local_dir = self.workspace / ".dvc"
+                        local_dir.mkdir(exist_ok=True)
+                        local_path = local_dir / dvc_file
+                        self.s3_client.download_file(self.s3_bucket, s3_key, str(local_path))
+                        logger.info(f"Downloaded .dvc/{dvc_file} from S3 ({s3_key})")
+                        downloaded_any = True
+                except Exception:
+                    # no .dvc files under this prefix - continue
+                    pass
+
+                if downloaded_any:
+                    return  # done (prefer first prefix that yields files)
+
+            # If none found, log and continue (caller may create dvc.lock later)
+            logger.info("No pipeline-config files found in S3 for this pipeline version/commit.")
                 
         except Exception as e:
             logger.error(f"Failed to download pipeline configuration: {e}")
@@ -113,7 +128,7 @@ class ProductionDVCTrainingManager:
     def upload_pipeline_configuration(self):
         """Upload current pipeline state to S3."""
         try:
-            config_prefix = f"pipeline-configs/{self.pipeline_version}/"
+            config_prefix = f"pipeline-configs/{self.pipeline_version}/{self.commit_sha}/"
             
             config_files = ["dvc.yaml", "dvc.lock", "params.yaml"]
             
@@ -125,6 +140,16 @@ class ProductionDVCTrainingManager:
                         str(local_path), self.s3_bucket, s3_key
                     )
                     logger.info(f"Uploaded {config_file} to S3")
+            
+            # also upload .dvc/config and .dvc/config.local if present (so reproduction can restore remotes)
+            dvc_dir = self.workspace / ".dvc"
+            if dvc_dir.exists():
+                for file in ("config", "config.local"):
+                    file_path = dvc_dir / file
+                    if file_path.exists():
+                        s3_key = f"{config_prefix}.dvc/{file}"
+                        self.s3_client.upload_file(str(file_path), self.s3_bucket, s3_key)
+                        logger.info(f"Uploaded .dvc/{file} to s3://{self.s3_bucket}/{s3_key}")
                     
         except Exception as e:
             logger.error(f"Failed to upload pipeline configuration: {e}")
@@ -375,6 +400,17 @@ class ProductionDVCTrainingManager:
                 self.s3_client.upload_file(str(file_path), self.s3_bucket, base_prefix + name)
             else:
                 logger.warning("Expected file missing during upload: %s", file_path)
+        
+        # Upload the .dvc/ directory (config, config.local, and any other small metadata files)
+        dvc_dir = self.workspace / ".dvc"
+        if dvc_dir.exists():
+            for p in dvc_dir.rglob("*"):
+                if p.is_file():
+                    rel = p.relative_to(self.workspace)
+                    s3_key = base_prefix + rel.as_posix()  # preserves ".dvc/config" structure
+                    self.s3_client.upload_file(str(p), self.s3_bucket, s3_key)
+        else:
+            logger.info(".dvc directory not present; skipping .dvc upload for this training run")
 
         logger.info("Training metadata stored at s3://%s/%s", self.s3_bucket, base_prefix)
 
@@ -384,6 +420,22 @@ class ProductionDVCTrainingManager:
         try:
             logger.info("Reproducing training run: %s", training_id)
             base_prefix = f"experiments/{training_id}/"
+
+            # Attempt to restore .dvc files first (so DVC knows remotes / settings)
+            try:
+                local_dvc_dir = self.workspace / ".dvc"
+                local_dvc_dir.mkdir(exist_ok=True)
+                for dvc_file in ("config", "config.local"):
+                    s3_key = base_prefix + f".dvc/{dvc_file}"
+                    local_path = local_dvc_dir / dvc_file
+                    try:
+                        self.s3_client.download_file(self.s3_bucket, s3_key, str(local_path))
+                        logger.info("Downloaded .dvc/%s from s3://%s/%s", dvc_file, self.s3_bucket, s3_key)
+                    except Exception:
+                        # fine if missing, continue
+                        pass
+            except Exception:
+                pass
 
             # Restore exact pipeline files
             for name in ("dvc.yaml", "params.yaml", "dvc.lock"):
@@ -408,19 +460,32 @@ class ProductionDVCTrainingManager:
                 capture_output=True, text=True, cwd=self.workspace
             )
             if result.returncode != 0:
-                raise RuntimeError(f"Reproduction failed: {result.stderr}")
+                # Important: Return a structured error, don't raise an exception that the endpoint turns into a 500
+                error_detail = f"Reproduction failed: {result.stderr}"
+                logger.error(error_detail)
+                return {
+                    "status": "reproduction_failed",
+                    "original_training_id": training_id,
+                    "error": error_detail,
+                    "output": result.stdout,
+                }
 
             logger.info("Training reproduction completed successfully")
 
             return {
                 "status": "reproduction_successful",
                 "original_training_id": training_id,
-                "reproduction_timestamp": datetime.datetime.utcnow().isoformat(),
+                "reproduction_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "output": result.stdout,
             }
 
         except Exception as e:
-            logger.error("Failed to reproduce training: %s", e)
-            raise
+             logger.error("Failed to reproduce training: %s", e)
+             # Also return a structured error here
+             return {
+                 "status": "reproduction_failed",
+                 "original_training_id": training_id,
+                 "error": str(e),
+             }
 
 
