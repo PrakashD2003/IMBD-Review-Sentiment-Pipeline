@@ -2,7 +2,7 @@ tempCodeRunnerFile.py
 Cloud-Deplyment-Strategy.txt
 pipeline_storage/
 artifacts/
-
+infrastructure/live-infra/infrastructure-metadata
 # Ignore DVC cache and state
 .dvc/
 .cache/

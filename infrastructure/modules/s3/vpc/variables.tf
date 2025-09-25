@@ -22,10 +22,22 @@ variable "public_subnet_cidrs" {
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
+variable "public_subnet_names" {
+  description = "A list of descriptive names for the public subnets."
+  type        = list(string)
+  default     = []
+}
+
 variable "private_subnet_cidrs" {
   description = "A list of CIDR blocks for the private subnets"
   type        = list(string)
   default     = ["10.0.101.0/24", "10.0.102.0/24"]
+}
+
+variable "private_subnet_names" {
+  description = "A list of descriptive names for the private subnets."
+  type        = list(string)
+  default     = []
 }
 
 variable "enable_nat_gateway" {
@@ -38,6 +50,19 @@ variable "enable_dns_hostnames" {
   description = "Enable DNS hostnames in the VPC"
   type        = bool
   default     = true
+}
+
+variable "extra_private_routes"{
+  description = "A list of extra, custom routing rules to add to the privarte route tables"
+  type = list(object({
+    cidr_block                  = string
+    # --- CHOOSE ONE TARGET ---
+    vpc_peering_connection_id   = optional(string)
+    transit_gateway_id          = optional(string)
+    nat_gateway_id              = optional(string)
+    network_interface_id        = optional(string)
+  }))
+  default = []
 }
 
 variable "tags" {
